@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id String @id @default(cuid())
+
+  firstName String
+  surname  String
+  otherName String?
+  email     String @unique
+  profilePicture String
+  DOB String
+  sex Sex
+  maritalStatus MaritalStatus
+  state String
+  LGA String
+  education EducationLevel
+  residentialAddress String
+
+  password String?
+
+  
+  adminId       String @unique
+  activationPin String
+
+
+  isActivated Boolean @default(false)
+
+
+  role AdminRole @default(REGISTRATION_OFFICER)
+
+
+  createdById String?
+  createdBy   Admin?  @relation("AdminCreator", fields: [createdById], references: [id])
+
+  createdAdmins Admin[] @relation("AdminCreator")
+
+
+  votersCreated Voter[] @relation("OfficerCreatedVoters")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Voter {
+  id String @id @default(cuid())
+
+  firstName      String
+  surname       String
+  otherName      String?
+  email          String  @unique
+  profilePicture String
+  DOB String
+  sex Sex
+  maritalStatus MaritalStatus
+  state String
+  LGA String
+  education EducationLevel
+  residentialAddress String
+
+  password String?
+
+  voterId       String @unique
+  activationPin String
+
+  isActivated Boolean @default(false)
+
+  votes Vote[]
+  duplicateVoteAttempts DuplicateVoteAttempt[]
+  biometricAttempts     BiometricAttempt[]
+
+
+  createdById String?
+  createdBy   Admin? @relation("OfficerCreatedVoters", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Election {
+  id          String   @id @default(cuid())
+  title       String @unique
+  description String?
+  status      ElectionStatus @default(DRAFT)
+
+  startDate   DateTime
+  endDate     DateTime
+
+  candidates  Candidate[]
+  votes       Vote[]
+  duplicateVoteAttempts DuplicateVoteAttempt[]
+  biometricAttempts     BiometricAttempt[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Candidate {
+  id          String   @id @default(cuid())
+  
+  firstName      String
+  surname       String
+  otherName      String?
+  DOB String
+  sex Sex
+  maritalStatus MaritalStatus
+  state String
+  LGA String
+  education EducationLevel
+  bio         String
+  imageUrl    String
+  partyId     String
+  party       Party @relation(fields: [partyId], references: [id])
+
+  electionId  String
+  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+
+  votes       Vote[]
+  duplicateVoteAttempts DuplicateVoteAttempt[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model Vote {
+  id          String   @id @default(cuid())
+
+  voterId     String
+  electionId  String
+  candidateId String
+
+  voter       Voter     @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  election    Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([voterId, electionId])
+  @@index([electionId])
+  @@index([candidateId])
+}
+
+model Party {
+  id             String      @id @default(cuid())
+  name           String      @unique
+  abbreviation   String      @unique
+  primaryColor   String      @default("#78716c")
+  secondaryColor String      @default("#1e293b")
+  logoUrl        String?
+  description    String?
+  isActive       Boolean     @default(true)
+  candidates     Candidate[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+enum ElectionStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  UPCOMING
+  }
+
+enum AdminRole {
+  SUPER_ADMIN
+  ELECTION_ADMIN
+  REGISTRATION_OFFICER
+  MONITORING_OFFICER
+  RESULTS_OFFICER
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum EducationLevel {
+  PRIMARY
+  SECONDARY
+  TERTIARY
+}
+
+model DuplicateVoteAttempt {
+  id          String   @id @default(cuid())
+  voterId     String
+  electionId  String
+  candidateId String
+  createdAt   DateTime @default(now())
+
+  voter       Voter     @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  election    Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model BiometricAttempt {
+  id          String   @id @default(cuid())
+  voterId     String
+  electionId  String
+  status      String   // "SUCCESS" | "FAILED"
+  createdAt   DateTime @default(now())
+
+  voter       Voter     @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  election    Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+
+  @@index([electionId])
+  @@index([voterId])
+}
+
+model SecurityAlert {
+  id          String   @id @default(cuid())
+  type        String   // "warning" | "success" | "info" | "danger"
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+}

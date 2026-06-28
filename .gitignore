@@ -1,0 +1,96 @@
+# Python
+__pycache__/
+.pycache/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local model assets and generated biometric artifacts
+backend/.insightface/
+backend/demo-images/
+backend/data/face_templates.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE/Editor
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.vs/
+.vim/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Frontend (Vite/React)
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+frontend/build/
+
+# Ignore all folders except frontend
+admin/
+api/
+backend/
+docs/
+mobile/
+frontend/.env.local
+frontend/.env.*.local
+frontend/coverage/
+
+# Backend/API
+api/node_modules/
+api/dist/
+api/build/
+api/.env.local
+api/.env.*.local
+
+# Mobile
+mobile/node_modules/
+mobile/dist/
+mobile/build/
+mobile/.env.local
+mobile/.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.mongodb
+
+# Cache
+.cache/
+.next/
+.eslintcache
+.prettierignore
+
+# IDE generated
+.DS_Store
+.AppleDouble
+.LSOverride
+*.cer
+*.crt
+*.der
+*.key

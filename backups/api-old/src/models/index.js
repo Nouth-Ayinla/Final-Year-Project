@@ -1,0 +1,15 @@
+module.exports = {
+  AdminUser: require('./AdminUser'),
+  AuditLog: require('./AuditLog'),
+  BallotDefinition: require('./BallotDefinition'),
+  BiometricProfile: require('./BiometricProfile'),
+  Candidate: require('./Candidate'),
+  Election: require('./Election'),
+  Lga: require('./Lga'),
+  Party: require('./Party'),
+  PollingUnit: require('./PollingUnit'),
+  VoteReceipt: require('./VoteReceipt'),
+  VoteRecord: require('./VoteRecord'),
+  Voter: require('./Voter'),
+  Ward: require('./Ward'),
+};
