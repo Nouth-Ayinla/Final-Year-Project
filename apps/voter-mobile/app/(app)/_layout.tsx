@@ -12,8 +12,8 @@ export default function AppLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: Colors.backgroundSecondary,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
+          borderTopColor: 'transparent',
+          borderTopWidth: 0,
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
@@ -35,8 +35,8 @@ export default function AppLayout() {
         name="dashboard"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home" size={20} color={color} />
           ),
         }}
       />
@@ -44,8 +44,17 @@ export default function AppLayout() {
         name="vote"
         options={{
           title: 'Vote',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkmark-done-circle" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="checkmark-done-circle" size={20} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="biometrics"
+        options={{
+          title: 'Biometrics',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="finger-print" size={20} color={color} />
           ),
         }}
       />
@@ -53,8 +62,8 @@ export default function AppLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={20} color={color} />
           ),
         }}
       />

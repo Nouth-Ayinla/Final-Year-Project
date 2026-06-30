@@ -11,8 +11,18 @@ import { API_ENDPOINTS } from '@/constants/Api';
 
 export type ElectionStatus = 'DRAFT' | 'UPCOMING' | 'ACTIVE' | 'CLOSED';
 
-export type PoliticalParty =
-  | 'APC' | 'PDP' | 'LP' | 'NNPP' | 'APGA' | 'SDP' | 'YPP';
+export interface PoliticalParty {
+  id: string;
+  name: string;
+  abbreviation: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  logoUrl?: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Election {
   id: string;

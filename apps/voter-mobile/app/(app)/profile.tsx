@@ -103,7 +103,7 @@ export default function ProfileScreen() {
           style={styles.logoutBtn}
         />
 
-        <Text style={styles.version}>Votosi v1.0.0</Text>
+        <Text style={styles.version}>OndoDecide v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );

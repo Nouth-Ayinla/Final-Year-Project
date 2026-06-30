@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Votosi",
-    "slug": "votosi",
+    "name": "OndoDecide",
+    "slug": "ondodecide",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "scheme": "votosi",
+    "scheme": "ondodecide",
     "ios": {
       "supportsTablet": false
     },
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.votosi.app"
+      "package": "com.ondodecide.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -30,7 +30,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow Votosi to use Face ID for secure authentication."
+          "faceIDPermission": "Allow OndoDecide to use Face ID for secure authentication."
         }
       ],
       "expo-font"

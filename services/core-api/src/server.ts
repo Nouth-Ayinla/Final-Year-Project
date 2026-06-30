@@ -1,15 +1,12 @@
-// server.ts
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { prisma } from "./lib/prisma.js";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import electionRoutes from "./routes/electionRoutes.js";
 import voterRoutes from "./routes/voterRoutes.js";
 import { startElectionScheduler } from "./lib/electionSchedular.js";
-
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 const app = express();

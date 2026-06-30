@@ -204,7 +204,13 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm, color: Colors.textSecondary,
     lineHeight: 20, marginBottom: Spacing.sm,
   },
-  dateBadges: { flexDirection: 'row', gap: Spacing.lg, marginBottom: Spacing.sm },
+  dateBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacing.md,
+    rowGap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
   dateItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateText: { fontSize: FontSizes.xs, color: Colors.textMuted },
   voteRow: {

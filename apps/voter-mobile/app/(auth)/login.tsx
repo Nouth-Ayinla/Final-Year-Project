@@ -1,8 +1,3 @@
-/**
- * Login Screen
- * Voter enters their Voter ID (or email) + password.
- * Links to account activation for first-time users.
- */
 import React, { useState } from 'react';
 import {
   View,
@@ -12,21 +7,32 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Animated,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassInput, GradientButton, GlassCard } from '@/components';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Colors, FontSizes, Spacing, BorderRadius } from '@/constants/Colors';
+import * as SecureStore from 'expo-secure-store';
+import { TOKEN_KEY } from '@/services/apiClient';
+import { useBiometric } from '@/hooks/useBiometric';
+
+const VOTER_STORE_KEY = 'ondodecide_voter';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, error, clearError, setBiometricVerified } = useAuthStore();
+  const { authenticate } = useBiometric();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [isIdFocused, setIsIdFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const handleLogin = async () => {
     if (!identifier.trim() || !password.trim()) return;
@@ -34,6 +40,30 @@ export default function LoginScreen() {
     const success = await login({ identifier: identifier.trim(), password });
     if (success) {
       router.replace('/(auth)/biometric');
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    try {
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      const voterJson = await SecureStore.getItemAsync(VOTER_STORE_KEY);
+      
+      if (token && voterJson) {
+        const success = await authenticate();
+        if (success) {
+          setBiometricVerified(true);
+          await useAuthStore.getState().initialize();
+          router.replace('/(app)/dashboard');
+        }
+      } else {
+        Alert.alert(
+          'Sign In Required',
+          'Please sign in with your ID and password first to configure biometrics on this device.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (err) {
+      console.error('Biometric login error:', err);
     }
   };
 
@@ -48,89 +78,135 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logoCircle}>
-                <Ionicons name="shield-checkmark" size={40} color={Colors.primary} />
-              </View>
-              <View style={styles.logoPulse} />
+          <View style={styles.formContainer}>
+            {/* Logo Image */}
+            <View style={styles.logoWrapper}>
+              <Image
+                source={require('@/assets/icon.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={styles.appName}>OndoDecide</Text>
-            <Text style={styles.tagline}>Secure Digital Voting</Text>
-          </View>
-
-          {/* Login Card */}
-          <GlassCard variant="elevated" style={styles.card}>
-            <Text style={styles.cardTitle}>Welcome Back</Text>
-            <Text style={styles.cardSubtitle}>
-              Sign in with your Voter ID or email
-            </Text>
 
             {error && (
               <View style={styles.errorBanner}>
-                <Ionicons name="alert-circle" size={18} color={Colors.error} />
+                <Ionicons name="alert-circle" size={18} color="#ffb4ab" />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
-            <GlassInput
-              label="Voter ID or Email"
-              placeholder="e.g. VTR-2026-XXXX or email@example.com"
-              icon="person-outline"
-              value={identifier}
-              onChangeText={(text) => {
-                setIdentifier(text);
-                if (error) clearError();
-              }}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-
-            <GlassInput
-              label="Password"
-              placeholder="Enter your password"
-              icon="lock-closed-outline"
-              isPassword
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (error) clearError();
-              }}
-            />
-
-            <GradientButton
-              title="Sign In"
-              onPress={handleLogin}
-              isLoading={isLoading}
-              disabled={!identifier.trim() || !password.trim()}
-              icon={
-                <Ionicons
-                  name="log-in-outline"
-                  size={20}
-                  color={Colors.textInverse}
+            {/* Identifier Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Voter ID or Email Address</Text>
+              <View style={[styles.inputWrapper, isIdFocused && styles.inputWrapperFocused]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your ID or Email"
+                  placeholderTextColor="rgba(247, 221, 212, 0.3)"
+                  value={identifier}
+                  onChangeText={(text) => {
+                    setIdentifier(text);
+                    if (error) clearError();
+                  }}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  onFocus={() => setIsIdFocused(true)}
+                  onBlur={() => setIsIdFocused(false)}
                 />
-              }
-            />
-          </GlassCard>
+              </View>
+            </View>
 
-          {/* Activate Link */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>First time here?</Text>
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Secure Password</Text>
+              <View style={[styles.inputWrapper, isPasswordFocused && styles.inputWrapperFocused]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="rgba(247, 221, 212, 0.3)"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (error) clearError();
+                  }}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#e1bfb2"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.forgotPasswordContainer}>
+                <TouchableOpacity activeOpacity={0.7}>
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Action Sign In Button */}
             <TouchableOpacity
-              onPress={() => router.push('/(auth)/activate')}
-              activeOpacity={0.7}
+              style={[
+                styles.submitButton,
+                (!identifier.trim() || !password.trim() || isLoading) && styles.submitButtonDisabled,
+              ]}
+              onPress={handleLogin}
+              disabled={!identifier.trim() || !password.trim() || isLoading}
+              activeOpacity={0.8}
             >
-              <Text style={styles.footerLink}>Activate your account</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#4e1900" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.submitButtonText}>Sign In</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#4e1900" />
+                </>
+              )}
             </TouchableOpacity>
-          </View>
 
-          {/* Security Badge */}
-          <View style={styles.securityBadge}>
-            <Ionicons name="finger-print" size={14} color={Colors.biometric} />
-            <Text style={styles.securityText}>
-              Protected by biometric verification
-            </Text>
+            {/* Biometric Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Or sign in with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Biometric Icon Buttons */}
+            <View style={styles.biometricsContainer}>
+              <TouchableOpacity
+                style={[styles.biometricButton, styles.biometricButtonActive]}
+                onPress={handleBiometricLogin}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="scan" size={26} color="#ffb597" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.biometricButton, styles.biometricButtonActive]}
+                onPress={handleBiometricLogin}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="finger-print" size={26} color="#ffb597" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Footer Activation Link */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account?</Text>
+              <TouchableOpacity
+                onPress={() => router.push('/(auth)/activate')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.footerLink}>Activate</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -141,111 +217,193 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#121212', // Charcoal background
   },
   flex: {
     flex: 1,
   },
+  appBar: {
+    height: 60,
+    backgroundColor: 'rgba(29, 16, 11, 0.8)',
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  appBarTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffb597', // primary color
+  },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
     justifyContent: 'center',
-  },
-  header: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
   },
-  logoContainer: {
-    position: 'relative',
-    marginBottom: Spacing.md,
+  formContainer: {
+    width: '100%',
+    maxWidth: 440,
+    padding: 16,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primaryMuted,
+  logoWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.primary,
+    marginBottom: 12,
   },
-  logoPulse: {
-    position: 'absolute',
-    top: -4,
-    left: -4,
-    right: -4,
-    bottom: -4,
-    borderRadius: 44,
-    borderWidth: 1,
-    borderColor: Colors.primaryGlow,
-  },
-  appName: {
-    fontSize: FontSizes.hero,
-    fontWeight: '900',
-    color: Colors.textPrimary,
-    letterSpacing: 6,
-  },
-  tagline: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
-  card: {
-    marginBottom: Spacing.lg,
+  logoImage: {
+    width: 90,
+    height: 90,
   },
   cardTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#f7ddd4', // on-surface
+    marginBottom: 4,
+    textAlign: 'center',
   },
   cardSubtitle: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.lg,
+    fontSize: 14,
+    color: '#e1bfb2', // on-surface-variant
+    marginBottom: 24,
+    textAlign: 'center',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.errorMuted,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
+    backgroundColor: 'rgba(147, 0, 10, 0.25)', // error-container
+    borderWidth: 1,
+    borderColor: '#ffb4ab',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
   },
   errorText: {
-    color: Colors.error,
-    fontSize: FontSizes.sm,
+    color: '#ffb4ab',
+    fontSize: 14,
     flex: 1,
+  },
+  inputGroup: {
+    marginBottom: 16,
+    gap: 6,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#e1bfb2',
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(23, 11, 7, 0.5)', // surface-container-lowest
+    borderWidth: 1,
+    borderColor: '#594138', // outline-variant
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 50,
+  },
+  inputWrapperFocused: {
+    borderColor: '#ffb597',
+    borderWidth: 1.5,
+  },
+  input: {
+    flex: 1,
+    color: '#f7ddd4',
+    fontSize: 15,
+    height: '100%',
+  },
+  eyeButton: {
+    padding: 8,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginTop: 4,
+  },
+  forgotPasswordText: {
+    color: '#ffb597',
+    fontSize: 12,
+  },
+  submitButton: {
+    backgroundColor: '#f2641a', // primary-container
+    height: 48,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+    shadowColor: '#D95300',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+  submitButtonDisabled: {
+    backgroundColor: 'rgba(242, 100, 26, 0.4)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitButtonText: {
+    color: '#4e1900', // on-primary-container
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(89, 65, 56, 0.3)',
+  },
+  dividerText: {
+    color: '#e1bfb2',
+    fontSize: 12,
+  },
+  biometricsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 24,
+    marginBottom: 16,
+  },
+  biometricButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(89, 65, 56, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  biometricButtonActive: {
+    borderColor: 'rgba(255, 181, 151, 0.3)',
+    backgroundColor: 'rgba(255, 181, 151, 0.05)',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.lg,
+    gap: 6,
+    marginTop: 8,
   },
   footerText: {
-    color: Colors.textSecondary,
-    fontSize: FontSizes.sm,
+    color: '#e1bfb2',
+    fontSize: 14,
   },
   footerLink: {
-    color: Colors.primary,
-    fontSize: FontSizes.sm,
+    color: '#ffb597',
     fontWeight: '700',
   },
-  securityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    opacity: 0.7,
-  },
-  securityText: {
-    color: Colors.textMuted,
-    fontSize: FontSizes.xs,
-  },
 });
+

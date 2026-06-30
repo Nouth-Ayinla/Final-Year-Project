@@ -30,12 +30,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2, Camera } from "lucide-react"; // Imported Camera icon
 
 import { RegisterOfficerSchema, RegisterVoterSchema } from "@/lib/zodSchema";
 import { useAuthStore } from "@/app/store/useAuthStore";
+
+const ONDO_LGAS = [
+  "Akoko North-East",
+  "Akoko North-West",
+  "Akoko South-East",
+  "Akoko South-West",
+  "Akure North",
+  "Akure South",
+  "Ese Odo",
+  "Idanre",
+  "Ifedore",
+  "Ilaje",
+  "Ile Oluji/Okeigbo",
+  "Irele",
+  "Odigbo",
+  "Ondo East",
+  "Ondo West",
+  "Ose",
+  "Owo"
+];
 
 export default function RegisterVoterForm() {
   const router = useRouter();
@@ -44,6 +64,11 @@ export default function RegisterVoterForm() {
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null); // Added preview state
+  
+  // Camera state hooks
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const form = useForm<z.infer<typeof RegisterVoterSchema>>({
     resolver: zodResolver(RegisterVoterSchema),
@@ -55,12 +80,75 @@ export default function RegisterVoterForm() {
       DOB: "",
       sex: "" as any,
       maritalStatus: "" as any,
-      state: "",
+      state: "Ondo",
       LGA: "",
       education: "" as any,
       residentialAddress: "",
     },
   });
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [stream]);
+
+  const startCamera = async () => {
+    setIsCameraOpen(true);
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 300, height: 300, facingMode: "user" },
+      });
+      setStream(mediaStream);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
+    } catch (err) {
+      console.error("Camera access error:", err);
+      toast.error("Could not access camera. Make sure permissions are granted.");
+      setIsCameraOpen(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 300;
+      canvas.height = video.videoHeight || 300;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const capturedFile = new File([blob], "voter_photo.jpg", {
+                type: "image/jpeg",
+              });
+              setFile(capturedFile);
+              setPreview(URL.createObjectURL(capturedFile));
+              toast.success("Photo captured successfully!");
+            }
+            stopCamera();
+          },
+          "image/jpeg",
+          0.95
+        );
+      }
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -127,36 +215,80 @@ export default function RegisterVoterForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* CIRCULAR PROFILE PICTURE INPUT */}
               <div className="flex flex-col items-center justify-center gap-3 mb-6">
-                <label
-                  htmlFor="profilePicture"
-                  className="relative flex h-32 w-32 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 bg-muted/30 hover:bg-muted/60 hover:border-primary transition overflow-hidden group shadow-inner"
-                >
-                  {preview ? (
-                    <>
-                      <img
-                        src={preview}
-                        alt="Profile preview"
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <Camera className="h-6 w-6 text-white" />
+                <div className="flex items-center gap-6">
+                  <label
+                    htmlFor="profilePicture"
+                    className="relative flex h-32 w-32 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 bg-muted/30 hover:bg-muted/60 hover:border-primary transition overflow-hidden group shadow-inner"
+                  >
+                    {preview ? (
+                      <>
+                        <img
+                          src={preview}
+                          alt="Profile preview"
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Camera className="h-6 w-6 text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-muted-foreground gap-1">
+                        <Camera className="h-8 w-8 stroke-[1.5]" />
+                        <span className="text-xs font-medium">Upload Image</span>
                       </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-muted-foreground gap-1">
-                      <Camera className="h-8 w-8 stroke-[1.5]" />
-                      <span className="text-xs font-medium">Upload Image</span>
-                    </div>
-                  )}
+                    )}
 
-                  <input
-                    id="profilePicture"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                </label>
+                    <input
+                      id="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+
+                  {isCameraOpen ? (
+                    <div className="flex flex-col items-center gap-2 bg-stone-50 border p-2 rounded-xl shadow-sm">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="h-28 w-28 rounded-full object-cover border-2 border-primary bg-stone-200"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-1 px-3 h-7"
+                          onClick={capturePhoto}
+                        >
+                          Capture
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs py-1 px-3 h-7"
+                          onClick={stopCamera}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1.5"
+                      onClick={startCamera}
+                    >
+                      <Camera className="h-4 w-4" />
+                      Take Photo
+                    </Button>
+                  )}
+                </div>
 
                 <div className="text-center">
                   <span className="text-sm font-medium block text-muted-foreground">
@@ -347,9 +479,23 @@ export default function RegisterVoterForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>LGA</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Ikeja" {...field} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select LGA" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ONDO_LGAS.map((lga) => (
+                            <SelectItem key={lga} value={lga}>
+                              {lga}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

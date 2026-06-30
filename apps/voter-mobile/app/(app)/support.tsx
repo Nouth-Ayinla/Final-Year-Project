@@ -176,7 +176,7 @@ export default function SupportScreen() {
             color={Colors.textMuted}
           />
           <Text style={styles.footerText}>
-            Votosi is operated by the Electoral Commission. All data is handled
+            OndoDecide is operated by the Electoral Commission. All data is handled
             in accordance with NDPR guidelines.
           </Text>
         </View>

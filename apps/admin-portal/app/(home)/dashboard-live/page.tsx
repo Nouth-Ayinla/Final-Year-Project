@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { RefreshCcw, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { SectionCard } from "@/components/custom/SectionCard";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import { getNavigationForRole, AdminRole } from "@/lib/data/adminNavigation";
 import { VoteDistributionMap } from "@/components/custom/VoteDistributionMap";
 import { VotingPaceChart } from "@/components/custom/VotingPaceChart";
 import { TurnoutProgressChart } from "@/components/custom/TurnoutProgressChart";
@@ -59,7 +57,6 @@ type LiveStats = {
 
 export default function DashboardLivePage() {
   const { profile } = useAuthStore();
-  const visibleNavigation = getNavigationForRole(profile?.role as AdminRole | undefined);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -262,20 +259,6 @@ export default function DashboardLivePage() {
         </div>
       </div>
 
-      {/* Modules */}
-      <section className="flex flex-col gap-4 mt-4">
-        <div className="flex items-end justify-between border-b border-border pb-2">
-          <h2 className="text-lg font-bold text-foreground">Available Modules</h2>
-          <span className="text-xs text-muted-foreground font-semibold">
-            {visibleNavigation.length} options for your role
-          </span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleNavigation.map((item) => (
-            <SectionCard item={item} key={item.path} />
-          ))}
-        </div>
-      </section>
 
       <footer className="mt-8 pt-6 border-t border-border text-center">
         <p className="text-xs text-muted-foreground">

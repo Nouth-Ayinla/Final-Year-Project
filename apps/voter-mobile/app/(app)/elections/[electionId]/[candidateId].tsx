@@ -17,7 +17,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassCard, GradientButton } from '@/components';
+import { GlassCard, GradientButton, BackArrow } from '@/components';
 import { useElectionStore } from '@/store/useElectionStore';
 import { Colors, FontSizes, Spacing, BorderRadius } from '@/constants/Colors';
 import type { CandidateDetail } from '@/services/electionService';
@@ -75,11 +75,13 @@ export default function CandidateDetailScreen() {
     return () => clearCandidateDetail();
   }, [electionId, candidateId]);
 
+  const partyAbbr = candidateDetail?.party?.abbreviation || '';
+
   const handleVote = () => {
     if (hasVoted) return;
     Alert.alert(
       'Confirm Your Vote',
-      `Are you sure you want to vote for ${candidateDetail?.firstName} ${candidateDetail?.surname} (${candidateDetail?.party})?`,
+      `Are you sure you want to vote for ${candidateDetail?.firstName} ${candidateDetail?.surname} (${partyAbbr})?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -126,7 +128,7 @@ export default function CandidateDetailScreen() {
     );
   }
 
-  const partyColor = PARTY_COLORS[candidateDetail.party] ?? Colors.textMuted;
+  const partyColor = candidateDetail.party?.primaryColor || (partyAbbr ? PARTY_COLORS[partyAbbr] : null) || Colors.textMuted;
   const election = candidateDetail.election;
 
   return (
@@ -134,7 +136,7 @@ export default function CandidateDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <BackArrow size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {electionTitle || 'Candidate'}
@@ -155,24 +157,36 @@ export default function CandidateDetailScreen() {
             {candidateDetail.firstName}{candidateDetail.otherName ? ' ' + candidateDetail.otherName : ''} {candidateDetail.surname}
           </Text>
           <View style={[styles.partyBadge, { backgroundColor: partyColor + '22' }]}>
-            <Text style={[styles.partyText, { color: partyColor }]}>{candidateDetail.party}</Text>
+            <Text style={[styles.partyText, { color: partyColor }]}>{partyAbbr}</Text>
           </View>
         </View>
-
-        {/* Vote count */}
-        {typeof candidateDetail._count?.votes === 'number' && (
-          <View style={styles.voteCountCard}>
-            <Ionicons name="bar-chart-outline" size={20} color={Colors.primary} />
-            <Text style={styles.voteCountText}>
-              {candidateDetail._count.votes} vote{candidateDetail._count.votes !== 1 ? 's' : ''} so far
-            </Text>
-          </View>
-        )}
 
         {/* Bio */}
         <GlassCard variant="elevated" style={styles.card}>
           <Text style={styles.cardTitle}>About</Text>
           <Text style={styles.bio}>{extractPlainText(candidateDetail.bio)}</Text>
+        </GlassCard>
+
+        {/* Campaign Manifesto */}
+        <GlassCard variant="elevated" style={styles.card}>
+          <Text style={styles.cardTitle}>Campaign Manifesto</Text>
+          <View style={styles.manifestoHeaderRow}>
+            <Ionicons name="bulb-outline" size={18} color="#C98B45" />
+            <Text style={styles.manifestoHeading}>Our Vision</Text>
+          </View>
+          <Text style={styles.manifestoText}>
+            Building a progressive and inclusive society where technology, accountability, and citizen-led development drive sustainable growth.
+          </Text>
+
+          <View style={[styles.manifestoHeaderRow, { marginTop: 12 }]}>
+            <Ionicons name="shield-outline" size={18} color="#C98B45" />
+            <Text style={styles.manifestoHeading}>Core Pillars</Text>
+          </View>
+          <Text style={styles.manifestoText}>
+            1. Transparency in governance and zero-tolerance for corruption.{"\n"}
+            2. Revitalizing key public sectors including education, healthcare, and economic security.{"\n"}
+            3. Promoting localized employment, small business incentives, and youth development programs.
+          </Text>
         </GlassCard>
 
         {/* Personal Info */}
@@ -292,4 +306,23 @@ const styles = StyleSheet.create({
     gap: Spacing.xs, opacity: 0.6,
   },
   disclaimerText: { color: Colors.textMuted, fontSize: FontSizes.xs },
+  manifestoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  manifestoHeading: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#f7ddd4',
+  },
+  manifestoText: {
+    fontSize: 13,
+    color: '#e1bfb2',
+    lineHeight: 18,
+    paddingLeft: 24,
+    marginBottom: 10,
+  },
 });

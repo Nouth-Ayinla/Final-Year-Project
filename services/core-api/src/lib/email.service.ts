@@ -15,7 +15,7 @@ export const sendEmail = async ({
 }: SendEmailParams) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Votosi App" <${process.env.SMTP_USER}>`,
+      from: `"OndoDecide App" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,

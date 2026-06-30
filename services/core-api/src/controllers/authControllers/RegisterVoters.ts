@@ -79,7 +79,7 @@ export const RegisterVoter = async (req: Request, res: Response) => {
     });
     await sendEmail({
       to: email,
-      subject: "Votosi Registration",
+      subject: "OndoDecide Registration",
       html: RegisterVoterTemplate(
         firstName,
         generatedVoterId,

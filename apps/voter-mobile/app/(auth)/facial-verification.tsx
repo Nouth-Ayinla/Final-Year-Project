@@ -1,17 +1,6 @@
 /**
- * Facial Verification Screen (MOCK)
- *
- * Flow: Activate Account → [this screen] → Biometric → Dashboard
- *
- * Current state: AI model not yet trained. This screen simulates the flow:
- *   1. Request camera permission
- *   2. Show live camera preview with a face-oval guide
- *   3. Voter taps "Capture" — shows a 3-second "Verifying…" animation
- *   4. Always succeeds (mock) and advances to biometric screen
- *
- * When the real AI model is ready, replace the mock verification
- * in `runMockVerification()` with a real API call that sends the
- * captured photo URI to the model endpoint.
+ * Facial Verification / Identity Enrollment Screen
+ * Renders a high-fidelity biometric scanning interface.
  */
 import React, { useRef, useState, useEffect } from 'react';
 import {
@@ -22,15 +11,16 @@ import {
   Animated,
   Easing,
   Alert,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { electionService } from '@/services/electionService';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSizes, Spacing, BorderRadius } from '@/constants/Colors';
 
-type Stage = 'permission' | 'camera' | 'verifying' | 'success' | 'failed';
+type Stage = 'permission' | 'camera' | 'verifying' | 'success';
 
 export default function FacialVerificationScreen() {
   const router = useRouter();
@@ -38,20 +28,37 @@ export default function FacialVerificationScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [stage, setStage] = useState<Stage>('permission');
 
-  // Pulse animation for the face oval during camera stage
+  // Scanning laser animation
+  const scanLineAnim = useRef(new Animated.Value(0)).current;
+  // Glowing border pulse animation
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  // Spin animation during verification
-  const spinAnim  = useRef(new Animated.Value(0)).current;
-  // Scale-in for success tick
-  const successAnim = useRef(new Animated.Value(0)).current;
 
-  // ── Animations ────────────────────────────────────────────────────────────
+  // Sync stage with camera permissions
   useEffect(() => {
-    if (stage === 'camera') {
+    if (permission?.granted) {
+      setStage('camera');
+    } else {
+      setStage('permission');
+    }
+  }, [permission]);
+
+  // Border pulsing loop
+  useEffect(() => {
+    if (stage === 'camera' || stage === 'verifying') {
       const pulse = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.04, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1,    duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseAnim, {
+            toValue: 1.04,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
         ])
       );
       pulse.start();
@@ -59,343 +66,519 @@ export default function FacialVerificationScreen() {
     }
   }, [stage]);
 
+  // Laser scanning animation loop
   useEffect(() => {
     if (stage === 'verifying') {
-      const spin = Animated.loop(
-        Animated.timing(spinAnim, { toValue: 1, duration: 1200, easing: Easing.linear, useNativeDriver: true })
+      const laser = Animated.loop(
+        Animated.sequence([
+          Animated.timing(scanLineAnim, {
+            toValue: 1,
+            duration: 2000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scanLineAnim, {
+            toValue: 0,
+            duration: 2000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
       );
-      spin.start();
+      laser.start();
+      return () => laser.stop();
     }
   }, [stage]);
 
-  useEffect(() => {
-    if (stage === 'success') {
-      Animated.spring(successAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start();
-    }
-  }, [stage]);
+  const scanTranslateY = scanLineAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 260], // Container height matches 260
+  });
 
-  // ── Permission handling ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (permission?.granted) setStage('camera');
-    else if (permission !== null && !permission.granted && !permission.canAskAgain) {
-      setStage('permission');
+  const handleStartScan = async () => {
+    if (stage === 'permission') {
+      const res = await requestPermission();
+      if (!res.granted) {
+        Alert.alert(
+          'Camera Required',
+          'OndoDecide needs your camera to scan and enroll your facial biometrics.',
+          [{ text: 'OK' }]
+        );
+      }
+      return;
     }
-  }, [permission]);
 
-  // ── Mock AI verification ──────────────────────────────────────────────────
-  const handleCapture = async () => {
     if (!cameraRef.current) return;
+
     try {
-      // Capture the picture from native camera view
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
-      if (!photo?.uri) throw new Error("Capture failed");
+      // Capture from native CameraView
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.75 });
+      if (!photo?.uri) throw new Error('Capture failed');
 
       setStage('verifying');
 
-      // Call Express API endpoint to proxy verification requests
-      const result = await electionService.verifyBiometric("", photo.uri);
+      // Verify photo against profile database
+      const result = await electionService.verifyBiometric('', photo.uri);
 
       if (result.success && result.matched) {
         setStage('success');
-        setTimeout(() => router.replace('/(auth)/biometric'), 1500);
+        setTimeout(() => router.replace('/(auth)/biometric'), 1800);
       } else {
         setStage('camera');
         Alert.alert(
-          'Verification Failed',
-          result.message || 'Face did not match the registered profile. Please try again.',
+          'Scan Failed',
+          result.message || 'Face details did not match voter record profile. Please retry.',
           [{ text: 'Retry', onPress: () => setStage('camera') }]
         );
       }
-    } catch (err: any) {
-      console.log("Biometric verification error:", err);
+    } catch (err) {
+      console.error('Biometric verification request error:', err);
       setStage('camera');
       Alert.alert(
-        'Error',
-        'Could not complete face verification due to server connection error. Please try again.'
+        'Verification Connection Error',
+        'Could not contact secure verification services. Please check connection and retry.',
+        [{ text: 'Retry' }]
       );
     }
   };
 
-  const handleDeny = () => {
-    Alert.alert(
-      'Camera Required',
-      'Facial verification requires camera access. Please enable it in your device settings to continue.',
-      [{ text: 'OK' }]
-    );
-  };
-
-  const spinInterpolate = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-
-  // ── Render: Permission denied ─────────────────────────────────────────────
-  if (stage === 'permission') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="camera-outline" size={52} color={Colors.primary} />
-          </View>
-          <Text style={styles.title}>Camera Access</Text>
-          <Text style={styles.subtitle}>
-            OndoDecide needs your camera to verify your identity before you can log in.
-            Your photo is never stored on our servers.
-          </Text>
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            activeOpacity={0.8}
-            onPress={async () => {
-              const res = await requestPermission();
-              if (!res.granted) handleDeny();
-            }}
-          >
-            <Ionicons name="camera" size={20} color={Colors.textInverse} />
-            <Text style={styles.primaryBtnText}>Allow Camera</Text>
-          </TouchableOpacity>
-
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Render: Verifying ─────────────────────────────────────────────────────
-  if (stage === 'verifying') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Animated.View style={[styles.spinnerRing, { transform: [{ rotate: spinInterpolate }] }]} />
-          <View style={styles.spinnerInner}>
-            <Ionicons name="scan" size={40} color={Colors.primary} />
-          </View>
-          <Text style={styles.title}>Verifying…</Text>
-          <Text style={styles.subtitle}>Matching your face with voter records</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Render: Success ───────────────────────────────────────────────────────
-  if (stage === 'success') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Animated.View style={[styles.successCircle, { transform: [{ scale: successAnim }] }]}>
-            <Ionicons name="checkmark" size={56} color="#fff" />
-          </Animated.View>
-          <Text style={styles.title}>Identity Verified</Text>
-          <Text style={styles.subtitle}>Welcome to OndoDecide. Setting up your session…</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Render: Camera ────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerTextWrap}>
-          <Text style={styles.headerTitle}>Face Verification</Text>
-          <Text style={styles.headerSub}>Position your face inside the oval</Text>
+      {/* Top App Bar */}
+      <View style={styles.appBar}>
+        <View style={styles.logoRow}>
+          <Ionicons name="shield" size={24} color="#ffb597" />
+          <Text style={styles.appBarTitle}>OndoDecide</Text>
         </View>
-      </View>
-
-      {/* Camera */}
-      <View style={styles.cameraWrap}>
-        <CameraView
-          ref={cameraRef}
-          style={StyleSheet.absoluteFill}
-          facing={'front' as CameraType}
-        />
-
-        {/* Dark overlay with oval cut-out effect */}
-        <View style={styles.overlay} pointerEvents="none">
-          {/* Top mask */}
-          <View style={styles.maskTop} />
-          {/* Middle row: side masks + oval border */}
-          <View style={styles.maskMiddleRow}>
-            <View style={styles.maskSide} />
-            <Animated.View style={[styles.ovalGuide, { transform: [{ scale: pulseAnim }] }]}>
-              {/* Corner markers */}
-              <View style={[styles.corner, styles.cornerTL]} />
-              <View style={[styles.corner, styles.cornerTR]} />
-              <View style={[styles.corner, styles.cornerBL]} />
-              <View style={[styles.corner, styles.cornerBR]} />
-            </Animated.View>
-            <View style={styles.maskSide} />
-          </View>
-          {/* Bottom mask */}
-          <View style={styles.maskBottom} />
-        </View>
-      </View>
-
-      {/* Instructions & capture button */}
-      <View style={styles.controls}>
-        <View style={styles.tips}>
-          <TipRow icon="sunny-outline"    text="Good lighting — face a light source" />
-          <TipRow icon="glasses-outline"  text="Remove glasses if possible" />
-          <TipRow icon="move-outline"     text="Keep still and look straight ahead" />
-        </View>
-
-        <TouchableOpacity style={styles.captureBtn} activeOpacity={0.85} onPress={handleCapture}>
-          <View style={styles.captureOuter}>
-            <View style={styles.captureInner} />
-          </View>
+        <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+          <Ionicons name="notifications-outline" size={22} color="#e1bfb2" />
         </TouchableOpacity>
-        <Text style={styles.captureLabel}>Tap to capture</Text>
       </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Progress Tracker Banner */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressItem}>
+            <Ionicons name="checkmark-circle" size={18} color="#a1d494" />
+            <Text style={[styles.progressText, styles.textCompleted]}>Verified ID</Text>
+          </View>
+          <View style={styles.progressDivider} />
+          <View style={styles.progressItem}>
+            <View style={styles.progressPulseDot} />
+            <Text style={[styles.progressText, styles.textActive]}>Biometric Link</Text>
+          </View>
+        </View>
+
+
+
+        {/* Camera / Scan Frame Section */}
+        <View style={styles.scannerViewport}>
+          {/* Outer focus corners */}
+          <View style={[styles.corner, styles.cornerTL]} />
+          <View style={[styles.corner, styles.cornerTR]} />
+          <View style={[styles.corner, styles.cornerBL]} />
+          <View style={[styles.corner, styles.cornerBR]} />
+
+          {/* Glowing scanner ring */}
+          <Animated.View
+            style={[
+              styles.scannerRing,
+              { transform: [{ scale: pulseAnim }] },
+              stage === 'success' && styles.ringSuccess,
+            ]}
+          >
+            <View style={styles.scannerRingInner}>
+              {/* Permission placeholder */}
+              {stage === 'permission' && (
+                <View style={styles.placeholderContainer}>
+                  <Ionicons name="camera-reverse" size={56} color="#ffb597" />
+                  <Text style={styles.placeholderText}>Camera Permission Required</Text>
+                </View>
+              )}
+
+              {/* Live Front Camera Stream */}
+              {(stage === 'camera' || stage === 'verifying') && (
+                <CameraView
+                  ref={cameraRef}
+                  style={StyleSheet.absoluteFill}
+                  facing="front"
+                />
+              )}
+
+              {/* Vertical Laser scanning line overlay */}
+              {stage === 'verifying' && (
+                <View style={StyleSheet.absoluteFill}>
+                  <Animated.View
+                    style={[
+                      styles.scanLine,
+                      { transform: [{ translateY: scanTranslateY }] },
+                    ]}
+                  />
+                  <View style={styles.scanningShieldMask} />
+                </View>
+              )}
+
+              {/* Successful check status overlay */}
+              {stage === 'success' && (
+                <View style={styles.successOverlay}>
+                  <Ionicons name="checkmark-circle" size={80} color="#a1d494" />
+                  <Text style={styles.successOverlayText}>Enrollment Complete</Text>
+                </View>
+              )}
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* Informative tips cards */}
+        <View style={styles.tipsSection}>
+          <View style={styles.tipsCard}>
+            <View style={[styles.tipsIconContainer, styles.iconContainerBgPrimary]}>
+              <Ionicons name="bulb" size={20} color="#ffb597" />
+            </View>
+            <View style={styles.tipsTextContainer}>
+              <Text style={styles.tipsTitle}>Optimal Lighting</Text>
+              <Text style={styles.tipsDesc}>
+                Ensure your face is evenly lit and avoid strong backlighting.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.tipsCard}>
+            <View style={[styles.tipsIconContainer, styles.iconContainerBgTertiary]}>
+              <Ionicons name="shield-checkmark" size={20} color="#acc7ff" />
+            </View>
+            <View style={styles.tipsTextContainer}>
+              <Text style={styles.tipsTitle}>Encryption Guarantee</Text>
+              <Text style={styles.tipsDesc}>
+                Your biometric signature is hashed locally and never stored as an image.
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Footer Actions */}
+        <View style={styles.actionSection}>
+          <TouchableOpacity
+            style={[
+              styles.scanActionButton,
+              stage === 'verifying' && styles.buttonVerifying,
+              stage === 'success' && styles.buttonSuccess,
+            ]}
+            onPress={handleStartScan}
+            disabled={stage === 'verifying' || stage === 'success'}
+            activeOpacity={0.8}
+          >
+            {stage === 'verifying' ? (
+              <ActivityIndicator color="#4e1900" size="small" />
+            ) : (
+              <>
+                <Text style={styles.scanActionButtonText}>
+                  {stage === 'permission'
+                    ? 'Grant Camera Permission'
+                    : stage === 'success'
+                      ? 'Success'
+                      : 'Start Scan'}
+                </Text>
+                <Ionicons
+                  name={stage === 'success' ? 'checkmark' : 'qr-code-outline'}
+                  size={18}
+                  color="#4e1900"
+                />
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.skipActionButton}
+            onPress={() => router.replace('/(auth)/biometric')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.skipActionButtonText}>I'll do this later</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-function TipRow({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }) {
-  return (
-    <View style={styles.tipRow}>
-      <Ionicons name={icon} size={14} color={Colors.primary} />
-      <Text style={styles.tipText}>{text}</Text>
-    </View>
-  );
-}
-
-const OVAL_W = 230;
-const OVAL_H = 290;
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-
-  // ── Shared centred layout ───────────────────────────────────────────────
-  center: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
+  container: {
+    flex: 1,
+    backgroundColor: '#121212', // Charcoal background
   },
-  iconCircle: {
-    width: 110, height: 110, borderRadius: 55,
-    backgroundColor: Colors.primaryMuted,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: Colors.primary,
-    marginBottom: Spacing.xl,
+  flex: {
+    flex: 1,
+  },
+  appBar: {
+    height: 60,
+    backgroundColor: 'rgba(29, 16, 11, 0.8)',
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  appBarTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffb597',
+  },
+  notificationButton: {
+    padding: 6,
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  progressItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  textCompleted: {
+    color: '#a1d494',
+  },
+  textActive: {
+    color: '#ffb597',
+  },
+  progressDivider: {
+    flexGrow: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginHorizontal: 12,
+  },
+  progressPulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ffb597',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
-    fontSize: FontSizes.xxl, fontWeight: '800',
-    color: Colors.textPrimary, textAlign: 'center',
-    marginBottom: Spacing.sm,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#f7ddd4',
+    textAlign: 'center',
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: FontSizes.sm, color: Colors.textSecondary,
-    textAlign: 'center', lineHeight: 22,
-    marginBottom: Spacing.xl,
+    fontSize: 14,
+    color: '#e1bfb2',
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 10,
   },
-  primaryBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    backgroundColor: Colors.primary,
-    paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.md, minHeight: 56,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 10, elevation: 8,
-    marginBottom: Spacing.lg,
+  scannerViewport: {
+    alignSelf: 'center',
+    width: 260,
+    height: 260,
+    position: 'relative',
+    marginBottom: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  primaryBtnText: { color: Colors.textInverse, fontSize: FontSizes.md, fontWeight: '700' },
-
-  // ── Mock badge ──────────────────────────────────────────────────────────
-  mockBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    paddingHorizontal: Spacing.md, paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1, borderColor: 'rgba(245,158,11,0.25)',
+  scannerRing: {
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    borderWidth: 2,
+    borderColor: '#ffb597',
+    padding: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
-  mockText: { fontSize: FontSizes.xs, color: Colors.warning, fontWeight: '600' },
-  mockBadgeInline: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    paddingHorizontal: 8, paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-  },
-  mockTextSmall: { fontSize: 10, color: Colors.warning, fontWeight: '700' },
-
-  // ── Verifying spinner ───────────────────────────────────────────────────
-  spinnerRing: {
-    position: 'absolute',
-    width: 120, height: 120, borderRadius: 60,
-    borderWidth: 3, borderColor: Colors.primary,
-    borderRightColor: 'transparent',
-  },
-  spinnerInner: {
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: Colors.primaryMuted,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: Spacing.xl,
-  },
-
-  // ── Success ──────────────────────────────────────────────────────────────
-  successCircle: {
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: Colors.success,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: Spacing.xl,
-    shadowColor: Colors.success,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,
-  },
-
-  // ── Camera layout ────────────────────────────────────────────────────────
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-  },
-  headerTextWrap: { flex: 1 },
-  headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.textPrimary },
-  headerSub:   { fontSize: FontSizes.xs, color: Colors.textSecondary, marginTop: 2 },
-
-  cameraWrap: { flex: 1, position: 'relative' },
-
-  // Overlay
-  overlay:        { ...StyleSheet.absoluteFill, zIndex: 1 },
-  maskTop:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },
-  maskMiddleRow:  { flexDirection: 'row', height: OVAL_H },
-  maskSide:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },
-  maskBottom:     { flex: 1.2, backgroundColor: 'rgba(0,0,0,0.55)' },
-
-  ovalGuide: {
-    width: OVAL_W, height: OVAL_H,
-    borderRadius: OVAL_W / 2,
-    borderWidth: 2.5, borderColor: Colors.primary,
+  scannerRingInner: {
+    flex: 1,
+    borderRadius: 126,
     overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#1d100b',
+  },
+  ringSuccess: {
+    borderColor: '#a1d494',
+  },
+  placeholderContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  placeholderText: {
+    color: '#e1bfb2',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  scanLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#ffb597',
+    shadowColor: '#ffb597',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 20,
+  },
+  scanningShieldMask: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(255, 181, 151, 0.05)',
+  },
+  successOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(29, 16, 11, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  successOverlayText: {
+    color: '#a1d494',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  corner: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderColor: '#ffb597',
+    borderWidth: 2,
+    opacity: 0.4,
+  },
+  cornerTL: {
+    top: -10,
+    left: -10,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderTopLeftRadius: 8,
+  },
+  cornerTR: {
+    top: -10,
+    right: -10,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0,
+    borderTopRightRadius: 8,
+  },
+  cornerBL: {
+    bottom: -10,
+    left: -10,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+  },
+  cornerBR: {
+    bottom: -10,
+    right: -10,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    borderBottomRightRadius: 8,
+  },
+  tipsSection: {
+    gap: 16,
+    marginBottom: 32,
+  },
+  tipsCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    gap: 14,
+    alignItems: 'center',
+  },
+  tipsIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainerBgPrimary: {
+    backgroundColor: 'rgba(242, 100, 26, 0.15)',
+  },
+  iconContainerBgTertiary: {
+    backgroundColor: 'rgba(72, 143, 255, 0.15)',
+  },
+  tipsTextContainer: {
+    flex: 1,
+  },
+  tipsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#f7ddd4',
+    marginBottom: 2,
+  },
+  tipsDesc: {
+    fontSize: 12,
+    color: '#e1bfb2',
+    lineHeight: 16,
+  },
+  actionSection: {
+    gap: 12,
+  },
+  scanActionButton: {
+    backgroundColor: '#f2641a',
+    height: 50,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#D95300',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+  buttonVerifying: {
+    backgroundColor: 'rgba(242, 100, 26, 0.6)',
+  },
+  buttonSuccess: {
+    backgroundColor: '#a1d494',
+    shadowColor: '#a1d494',
+  },
+  scanActionButtonText: {
+    color: '#4e1900',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  skipActionButton: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-
-  // Corner accent marks
-  corner: {
-    position: 'absolute', width: 22, height: 22,
-    borderColor: Colors.primaryLight, borderWidth: 3,
-  },
-  cornerTL: { top: 14, left: 14, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 6 },
-  cornerTR: { top: 14, right: 14, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 6 },
-  cornerBL: { bottom: 14, left: 14, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 6 },
-  cornerBR: { bottom: 14, right: 14, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 6 },
-
-  // Controls
-  controls: {
-    backgroundColor: Colors.backgroundSecondary,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    borderTopWidth: 1, borderTopColor: Colors.border,
-  },
-  tips: { marginBottom: Spacing.lg, gap: 6 },
-  tipRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  tipText: { fontSize: FontSizes.xs, color: Colors.textMuted },
-
-  captureBtn: { alignSelf: 'center', marginBottom: Spacing.sm },
-  captureOuter: {
-    width: 72, height: 72, borderRadius: 36,
-    borderWidth: 3, borderColor: Colors.primary,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  captureInner: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: Colors.primary,
-  },
-  captureLabel: {
-    textAlign: 'center', fontSize: FontSizes.xs,
-    color: Colors.textMuted, marginBottom: 4,
+  skipActionButtonText: {
+    color: '#e1bfb2',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

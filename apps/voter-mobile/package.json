@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo/metro-runtime": "^56.0.15",
     "@expo/vector-icons": "^15.0.2",
     "axios": "^1.17.0",
     "expo": "~56.0.8",
     "expo-camera": "~56.0.8",
     "expo-constants": "~56.0.16",
-    "expo-dev-client": "~56.0.18",
     "expo-font": "~56.0.5",
     "expo-linking": "~56.0.13",
     "expo-local-authentication": "~56.0.4",
@@ -17,11 +17,14 @@
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
+    "react-dom": "^19.2.7",
     "react-native": "0.85.3",
     "react-native-gesture-handler": "~2.31.1",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
+    "react-native-svg": "^15.15.5",
+    "react-native-web": "^0.21.2",
     "react-native-worklets": "0.8.3",
     "zustand": "^5.0.14"
   },
@@ -31,6 +34,7 @@
   },
   "scripts": {
     "start": "expo start",
+    "expo-go": "expo start --go",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"

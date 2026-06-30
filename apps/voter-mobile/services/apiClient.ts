@@ -1,5 +1,5 @@
 /**
- * Axios HTTP client configured for the Votosi backend.
+ * Axios HTTP client configured for the OndoDecide backend.
  *
  * Auth strategy:
  * - Backend sets JWT as an httpOnly cookie on login/activation.
@@ -12,7 +12,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from '@/constants/Api';
 
-const TOKEN_KEY = 'votosi_jwt';
+const TOKEN_KEY = 'ondodecide_jwt';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

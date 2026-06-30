@@ -7,16 +7,23 @@
  * When running on a physical device, use the machine's LAN IP.
  */
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 const getBaseUrl = (): string => {
   if (__DEV__) {
     if (Platform.OS === 'ios') {
-      return 'http://localhost:5000';      // iOS simulator only
+      return 'http://localhost:5001';      // iOS simulator only
     }
-    // Android physical device + Android emulator (change 10.0.2.2 for emulator)
-    return 'http://196.220.136.88:5000';   // ← your machine's LAN IP
+    // Dynamically get the host machine's LAN IP from Expo CLI/Metro
+    const hostUri = Constants.expoConfig?.hostUri; // e.g. "192.168.92.124:8081"
+    if (hostUri) {
+      const ip = hostUri.split(':')[0];
+      return `http://${ip}:5001`;
+    }
+    // Fallback if hostUri is unavailable (e.g. Android Emulator fallback)
+    return 'http://10.0.2.2:5001';
   }
-  return 'https://api.votosi.com';
+  return 'https://api.ondodecide.com';
 };
 
 

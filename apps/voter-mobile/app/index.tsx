@@ -16,12 +16,13 @@ export default function Index() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isBiometricVerified = useAuthStore((s) => s.isBiometricVerified);
+  const biometricSkipped = useAuthStore((s) => s.biometricSkipped);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isAuthenticated) {
         router.replace('/(auth)/login');
-      } else if (!isBiometricVerified) {
+      } else if (!isBiometricVerified && !biometricSkipped) {
         router.replace('/(auth)/biometric');
       } else {
         router.replace('/(app)/dashboard');
@@ -29,7 +30,7 @@ export default function Index() {
     }, 100);
 
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, isBiometricVerified]);
+  }, [isAuthenticated, isBiometricVerified, biometricSkipped]);
 
   return <View style={styles.container} />;
 }

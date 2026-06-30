@@ -16,7 +16,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassCard } from '@/components';
+import { GlassCard, BackArrow } from '@/components';
 import { useElectionStore } from '@/store/useElectionStore';
 import { Colors, FontSizes, Spacing, BorderRadius } from '@/constants/Colors';
 import { Election, ElectionStatus } from '@/services/electionService';
@@ -87,7 +87,7 @@ export default function ResultsScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+            <BackArrow size={22} color={Colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Results</Text>
         </View>
@@ -102,7 +102,7 @@ export default function ResultsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <BackArrow size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <View>
           <Text style={styles.title}>Results</Text>

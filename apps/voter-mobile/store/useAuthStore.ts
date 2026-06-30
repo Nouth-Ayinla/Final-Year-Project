@@ -18,7 +18,7 @@ import * as SecureStore from 'expo-secure-store';
 import { authService, VoterData, LoginPayload, ActivatePayload } from '@/services/authService';
 import { TOKEN_KEY } from '@/services/apiClient';
 
-const VOTER_STORE_KEY = 'votosi_voter';
+const VOTER_STORE_KEY = 'ondodecide_voter';
 
 /** Strip the hashed password the backend mistakenly includes in responses. */
 function sanitiseVoter(v: any): VoterData {
@@ -47,6 +47,7 @@ interface AuthState {
   voter: VoterData | null;
   isAuthenticated: boolean;
   isBiometricVerified: boolean;
+  biometricSkipped: boolean;
   isLoading: boolean;
   isInitializing: boolean;
   error: string | null;
@@ -56,6 +57,7 @@ interface AuthState {
   logout:              ()                          => Promise<void>;
   refreshProfile:      (data: Partial<VoterData>) => Promise<void>;
   setBiometricVerified:(verified: boolean)         => void;
+  setBiometricSkipped: (skipped: boolean)          => void;
   clearError:          ()                          => void;
   initialize:          ()                          => Promise<void>;
 }
@@ -64,6 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   voter:               null,
   isAuthenticated:     false,
   isBiometricVerified: false,
+  biometricSkipped:     false,
   isLoading:           false,
   isInitializing:      true,
   error:               null,
@@ -92,7 +95,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authService.login(payload);
       if (response.data) {
         const voter = await mergeAndStore(response.data);
-        set({ voter, isAuthenticated: true, isBiometricVerified: false, isLoading: false });
+        set({ voter, isAuthenticated: true, isBiometricVerified: false, biometricSkipped: false, isLoading: false });
         return true;
       }
       set({ isLoading: false, error: response.message });
@@ -112,7 +115,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authService.activate(payload);
       if (response.data) {
         const voter = await mergeAndStore(response.data);
-        set({ voter, isAuthenticated: true, isBiometricVerified: false, isLoading: false });
+        set({ voter, isAuthenticated: true, isBiometricVerified: false, biometricSkipped: false, isLoading: false });
         return true;
       }
       set({ isLoading: false, error: response.message });
@@ -129,10 +132,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try { await authService.logout(); } catch { /* always clear local state */ }
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(VOTER_STORE_KEY);
-    set({ voter: null, isAuthenticated: false, isBiometricVerified: false, isLoading: false, error: null });
+    set({ voter: null, isAuthenticated: false, isBiometricVerified: false, biometricSkipped: false, isLoading: false, error: null });
   },
 
   setBiometricVerified: (verified) => set({ isBiometricVerified: verified }),
+  setBiometricSkipped:  (skipped)  => set({ biometricSkipped: skipped }),
   clearError:           ()         => set({ error: null }),
 
   // Call with fresh full voter data whenever it becomes available

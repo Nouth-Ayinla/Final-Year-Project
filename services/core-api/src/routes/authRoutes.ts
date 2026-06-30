@@ -14,14 +14,32 @@ import { ActivateAdminAccount } from "../controllers/authControllers/ActivateAdm
 import { AdminLogin } from "../controllers/authControllers/AdminLogin.js";
 import { getMeAdmin } from "../controllers/ManageUser/GetMeAdmin.js";
 import { adminOnly } from "../middleware/adminMiddleWare.js";
-
+import { validateSchema } from "../validation/validateSchema.js";
+import {
+  RegisterOfficerSchema,
+  RegisterVoterSchema,
+  adminLoginSchema,
+} from "../validation/zodSchemas.js";
 
 const router = express.Router();
-router.post("/adminLogin", AdminLogin);
+router.post("/adminLogin", validateSchema(adminLoginSchema), AdminLogin);
 router.post("/logout", logout);
-router.post( "/registerOfficer", protectRoute, adminOnly, upload.single("profilePicture"), RegisterOfficer,);
+router.post(
+  "/registerOfficer",
+  protectRoute,
+  adminOnly,
+  upload.single("profilePicture"),
+  validateSchema(RegisterOfficerSchema),
+  RegisterOfficer,
+);
 router.get("/check", protectRoute, checkAuth);
-router.post("/registerVoter", protectRoute, upload.single("profilePicture"), RegisterVoter);
+router.post(
+  "/registerVoter",
+  protectRoute,
+  upload.single("profilePicture"),
+  validateSchema(RegisterVoterSchema),
+  RegisterVoter,
+);
 router.get("/getRegisteredOfficers", GetRegisteredOfficers);
 router.get("/getRegisteredVoters", GetRegisteredVoters);
 router.delete("/deleteOfficer/:officerId", protectRoute, adminOnly, DeleteOfficer);

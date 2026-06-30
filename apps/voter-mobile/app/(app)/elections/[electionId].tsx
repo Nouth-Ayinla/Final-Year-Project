@@ -17,7 +17,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassCard } from '@/components';
+import { GlassCard, BackArrow } from '@/components';
 import { useElectionStore } from '@/store/useElectionStore';
 import { Colors, FontSizes, Spacing, BorderRadius } from '@/constants/Colors';
 import { Candidate } from '@/services/electionService';
@@ -39,7 +39,8 @@ function CandidateCard({
   candidate: Candidate;
   onPress: () => void;
 }) {
-  const partyColor = PARTY_COLORS[candidate.party] ?? Colors.textMuted;
+  const partyAbbr = candidate.party?.abbreviation || '';
+  const partyColor = candidate.party?.primaryColor || (partyAbbr ? PARTY_COLORS[partyAbbr] : null) || Colors.textMuted;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -58,7 +59,7 @@ function CandidateCard({
               {candidate.firstName} {candidate.otherName ? candidate.otherName + ' ' : ''}{candidate.surname}
             </Text>
             <View style={[styles.partyBadge, { backgroundColor: partyColor + '22' }]}>
-              <Text style={[styles.partyText, { color: partyColor }]}>{candidate.party}</Text>
+              <Text style={[styles.partyText, { color: partyColor }]}>{partyAbbr}</Text>
             </View>
             <Text style={styles.meta}>{candidate.state} · {candidate.LGA}</Text>
           </View>
@@ -99,7 +100,7 @@ export default function ElectionDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <BackArrow size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitle}>
           <Text style={styles.title} numberOfLines={1}>{title || 'Election'}</Text>

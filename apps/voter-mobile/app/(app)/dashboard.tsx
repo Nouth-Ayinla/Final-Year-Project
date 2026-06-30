@@ -60,6 +60,7 @@ const quickActions: QuickAction[] = [
 export default function DashboardScreen() {
   const router = useRouter();
   const voter = useAuthStore((s) => s.voter);
+  const isBiometricVerified = useAuthStore((s) => s.isBiometricVerified);
   const { elections, fetchElections, votedElections } = useElectionStore();
 
   useEffect(() => { fetchElections(); }, []);
@@ -202,18 +203,41 @@ export default function DashboardScreen() {
         </View>
 
         {/* Security Status */}
-        <GlassCard style={styles.securityCard}>
-          <View style={styles.securityRow}>
-            <Ionicons name="shield-checkmark" size={20} color={Colors.success} />
-            <View style={styles.securityInfo}>
-              <Text style={styles.securityTitle}>Security Status</Text>
-              <Text style={styles.securitySubtitle}>
-                Biometric verified • Session active
-              </Text>
+        <TouchableOpacity
+          activeOpacity={isBiometricVerified ? 1 : 0.7}
+          onPress={() => {
+            if (!isBiometricVerified) {
+              router.push('/(app)/biometrics');
+            }
+          }}
+        >
+          <GlassCard style={styles.securityCard}>
+            <View style={styles.securityRow}>
+              <Ionicons
+                name={isBiometricVerified ? "shield-checkmark" : "shield-outline"}
+                size={20}
+                color={isBiometricVerified ? Colors.success : Colors.error}
+              />
+              <View style={styles.securityInfo}>
+                <Text style={styles.securityTitle}>Security Status</Text>
+                <Text style={styles.securitySubtitle}>
+                  {isBiometricVerified
+                    ? "Biometric verified • Session active"
+                    : "Biometrics not verified • Action required"}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.statusDot,
+                  !isBiometricVerified && {
+                    backgroundColor: Colors.error,
+                    shadowColor: Colors.error,
+                  },
+                ]}
+              />
             </View>
-            <View style={styles.statusDot} />
-          </View>
-        </GlassCard>
+          </GlassCard>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

@@ -80,7 +80,7 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
 
     await sendEmail({
       to: email,
-      subject: "Votosi Officer Registration",
+      subject: "OndoDecide Officer Registration",
       html: RegisterOfficerTemplate(
         firstName,
         generatedAdminId,

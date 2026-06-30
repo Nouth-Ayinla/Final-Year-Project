@@ -1,15 +1,15 @@
 /**
- * Votosi Design System Colors
+ * OndoDecide Design System Colors
  * Derived from admin/app/globals.css dark-mode variables.
  * Primary: warm amber  — consistent with the admin dashboard brand.
  */
 export const Colors = {
-  // ── Backgrounds (--background / --card dark) ──────────────────────────────
-  background:          '#32322D',   // oklch(0.2679 0.0036 106.64)
-  backgroundSecondary: '#2E2E29',   // oklch(0.2213 0.0038 106.71) --muted dark
-  backgroundTertiary:  '#2A2A25',   // oklch(0.2130 0.0078 95.42)  --accent dark
-  surface:             '#3A3A34',   // slightly lifted from background
-  surfaceElevated:     '#424239',   // --popover dark oklch(0.3085)
+  // ── Backgrounds (Charcoal dark mode) ──────────────────────────────────────
+  background:          '#121212',   // charcoal background
+  backgroundSecondary: '#1C1C1E',   // lifted secondary background
+  backgroundTertiary:  '#2C2C2E',   // accent tertiary background
+  surface:             '#1E1E1E',   // surface color
+  surfaceElevated:     '#2D2D2D',   // elevated cards / popovers
 
   // ── Brand accent — warm amber (--primary dark) ────────────────────────────
   primary:      '#C98B45',              // oklch(0.6724 0.1308 38.76)
@@ -31,14 +31,14 @@ export const Colors = {
   errorMuted:  'rgba(224,90,58,0.15)',
   info:        '#7BAFD4',              // muted blue
 
-  // ── Borders (--border dark oklch(0.3618 0.0101 106.89)) ──────────────────
-  border:       '#52524A',
-  borderLight:  '#5E5E55',
+  // ── Borders (Charcoal theme) ──────────────────────────────────────────────
+  border:       '#2C2C2E',
+  borderLight:  '#3A3A3C',
   borderFocus:  '#C98B45',   // same as primary
 
   // ── Glassmorphism ─────────────────────────────────────────────────────────
-  glassBg:    'rgba(58,58,52,0.80)',
-  glassStroke:'rgba(207,201,184,0.10)',
+  glassBg:    'rgba(28,28,30,0.80)',
+  glassStroke:'rgba(255,255,255,0.08)',
 
   // ── Biometric accent ──────────────────────────────────────────────────────
   biometric:      '#7BAFD4',
