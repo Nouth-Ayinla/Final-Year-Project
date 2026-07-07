@@ -99,3 +99,21 @@ if (req.user.role !== "SUPER_ADMIN" && req.user.role !== "ELECTION_ADMIN") {
 }
 ```
 
+## Security Architecture & Cryptographic Randomization
+
+### 1. Overall Security Architecture
+OndoDecide employs a defense-in-depth security model to ensure the confidentiality, integrity, and availability of sensitive voter registration and biometric telemetry:
+- **Role-Based Access Control (RBAC)**: Fine-grained tiering restricts access to routes and administrative actions. Users can only perform actions explicitly allowed by their system role.
+- **Secure Session Management**: Authentication is performed via JSON Web Tokens (JWT) stored in HTTP-Only cookies. The cookies use `SameSite: strict` and `Secure` (in production) properties to mitigate Cross-Site Scripting (XSS) and Cross-Site Request Forgery (CSRF).
+- **Network & API Security**: Cross-Origin Resource Sharing (CORS) rules allow only trusted frontends, and API payload sizes are limited to protect against Denial of Service (DoS) attempts.
+- **Data Protection**: Sensible data is stored in PostgreSQL database with strong hashing (using `bcrypt` for passwords and PINs).
+
+### 2. Cryptographically Secure Pseudo-Random Number Generation (CSPRNG)
+Predictable random numbers (like `Math.random()`) can be easily guessed by attackers, leading to compromised session IDs, IDs, or activation PINs. OndoDecide mandates cryptographically secure randomization:
+
+- **Why Math.random() is Insufficient**: Standard JavaScript `Math.random()` relies on algorithms (like xorshift128+) that are optimized for speed, not security. Given a sequence of outputs, an attacker can reconstruct the internal state generator and predict all future values.
+- **Cryptographical Seeding**: To enforce entropy, OndoDecide uses Node.js's built-in `crypto` module (for backend ID/PIN generation). 
+- **CSPRNG Implementation**: The backend utilizes secure random bytes from the operating system's entropy pool (e.g., `/dev/urandom` on Unix or CryptGenRandom on Windows).
+- **PIN/ID Security**: The generated six-digit activation PINs are derived from CSPRNG random bytes, preventing reverse-engineering or brute-force predictive modeling.
+
+

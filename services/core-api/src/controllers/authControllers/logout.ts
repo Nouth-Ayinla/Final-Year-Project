@@ -1,7 +1,25 @@
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import { prisma } from "../../lib/prisma.js";
+import { logAudit } from "../../utils/auditLogger.js";
 
 export const logout = async (req: Request, res: Response) => {
   try {
+    const token = req.cookies.jwt;
+    if (token) {
+      try {
+        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || "my-super-secret-key");
+        if (decoded && decoded.userId) {
+          const admin = await prisma.admin.findUnique({ where: { id: decoded.userId } });
+          if (admin) {
+            await logAudit(admin.email, "LOGOUT", "Admin", admin.adminId);
+          }
+        }
+      } catch (err) {
+        console.error("Error decoding token in logout:", err);
+      }
+    }
+
     res.cookie("jwt", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

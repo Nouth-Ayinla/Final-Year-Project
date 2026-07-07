@@ -58,7 +58,7 @@ export function LoginForm({
       {/* Main Container */}
       <div className="scale-[0.9] lg:scale-100 transform z-10 flex items-center justify-center">
         <div className="relative w-[980px] h-[650px] bg-white rounded-[32px] shadow-2xl overflow-hidden flex border border-[#E7E5E4]/60">
-          
+
           {/* Left Pane - Form */}
           <div className="w-1/2 h-full flex flex-col justify-center p-12 bg-white">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-[360px] mx-auto text-center">
@@ -138,7 +138,7 @@ export function LoginForm({
                     Authenticating...
                   </>
                 ) : (
-                  "Login to Console"
+                  "sign in"
                 )}
               </Button>
             </form>
@@ -156,10 +156,9 @@ export function LoginForm({
                 System Admin
               </h2>
               <p className="text-sm opacity-80 mb-8 leading-relaxed text-stone-300">
-                Welcome back. Log in with your administrative credentials to configure rules, monitor voter turnout, and audit ledgers.
-              </p>
+                Welcome back </p>
               <div className="w-full space-y-4">
-                <div className="text-xs text-stone-400">First time logging in?</div>
+                <div className="text-xs text-stone-400">First time?</div>
                 <Button
                   onClick={() => router.push("/activate-account")}
                   variant="outline"

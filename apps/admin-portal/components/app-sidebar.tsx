@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Fingerprint,
   Flag,
+  MapPinned,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/app/store/useAuthStore";
@@ -54,6 +55,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Elections",
       url: "/election",
       icon: <BoxIcon />,
+      roles: ["SUPER_ADMIN", "ELECTION_ADMIN"],
+    },
+    {
+      title: "Wards Management",
+      url: "/wards",
+      icon: <MapPinned />,
       roles: ["SUPER_ADMIN", "ELECTION_ADMIN"],
     },
     {

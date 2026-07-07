@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Map, Search, Info, TrendingUp, Vote, CheckCircle2 } from "lucide-react";
 import { GlassCard } from "./GlassCard";
+import { axiosInstance } from "@/app/lib/axios";
 
 type MapOverlay = {
   title: string;
@@ -68,11 +69,28 @@ const getPartyColor = (party?: string, customParties: any[] = []) => {
   return "#78716C";
 };
 
+const getBoundingBox = (pointsStr: string) => {
+  const pairs = pointsStr.trim().split(/\s+/);
+  const xs = pairs.map((p) => parseFloat(p.split(",")[0]));
+  const ys = pairs.map((p) => parseFloat(p.split(",")[1]));
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+};
+
 export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredLgaId, setHoveredLgaId] = useState<string | null>(null);
   const [selectedLgaId, setSelectedLgaId] = useState<string | null>(null);
   const [customParties, setCustomParties] = useState<any[]>([]);
+  const [wards, setWards] = useState<any[]>([]);
 
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
@@ -95,7 +113,7 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
   const listContainerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Load custom parties from localStorage on mount
+  // Load custom parties and database wards on mount
   useEffect(() => {
     const stored = localStorage.getItem("registered_parties");
     if (stored) {
@@ -103,6 +121,18 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
         setCustomParties(JSON.parse(stored));
       } catch (e) {}
     }
+
+    const fetchWards = async () => {
+      try {
+        const res = await axiosInstance.get("/ward/list");
+        if (res.data && res.data.success) {
+          setWards(res.data.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wards:", err);
+      }
+    };
+    fetchWards();
   }, []);
 
   const allPartiesList = useMemo(() => {
@@ -133,6 +163,20 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
       };
     });
   }, [overlays]);
+
+  // Compute bounding box dynamic viewBox
+  const defaultViewBox = "0 0 350 600";
+  const viewBox = useMemo(() => {
+    if (selectedLgaId) {
+      const selectedLga = ONDO_LGAS.find((l) => l.id === selectedLgaId);
+      if (selectedLga) {
+        const { x, y, width, height } = getBoundingBox(selectedLga.points);
+        const padding = 25;
+        return `${x - padding} ${y - padding} ${width + padding * 2} ${height + padding * 2}`;
+      }
+    }
+    return defaultViewBox;
+  }, [selectedLgaId]);
 
   // Sort local governments by vote count (highest first)
   const sortedLgas = useMemo(() => {
@@ -186,6 +230,19 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
     setTooltip((prev) => ({ ...prev, visible: false }));
   };
 
+  const selectedLgaObj = useMemo(() => {
+    return ONDO_LGAS.find(l => l.id === selectedLgaId);
+  }, [selectedLgaId]);
+
+  const activeWards = useMemo(() => {
+    if (!selectedLgaObj) return [];
+    return wards.filter(
+      (w) => normalizeLgaName(w.lgaName) === normalizeLgaName(selectedLgaObj.name)
+    );
+  }, [selectedLgaObj, wards]);
+
+  const isAnySelected = selectedLgaId !== null;
+
   return (
     <GlassCard className="rounded-xl overflow-hidden flex flex-col h-[650px] border border-border/80">
       {/* Card Header */}
@@ -220,10 +277,20 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
             backgroundSize: "24px 24px",
           }}
         >
+          {/* Isolation Cancel/Return Button */}
+          {selectedLgaId && (
+            <button
+              onClick={() => setSelectedLgaId(null)}
+              className="absolute top-4 left-4 z-40 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-lg shadow-md transition-all flex items-center gap-1.5"
+            >
+              ← Return to State Map
+            </button>
+          )}
+
           {/* SVG Map of Ondo State */}
           <svg
-            viewBox="0 0 350 600"
-            className="w-full h-full max-h-[500px] drop-shadow-lg select-none transition-all duration-300"
+            viewBox={viewBox}
+            className="w-full h-full max-h-[500px] drop-shadow-lg select-none transition-all duration-500 ease-in-out"
             onMouseMove={handleMouseMove}
           >
             <g className="cursor-pointer">
@@ -238,18 +305,20 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
 
                 if (!isPending) {
                   fill = getPartyColor(lga.leader, customParties);
-                  // Calculate opacity based on lead strength or total votes to reflect density (min 0.45, max 0.95)
                   fillOpacity = 0.5 + (lga.percentage / 100) * 0.45;
                 }
+
+                // Opacity dimming if another LGA is isolated/focused
+                const opacity = isAnySelected ? (isSelected ? 1.0 : 0.08) : fillOpacity;
 
                 return (
                   <polygon
                     key={lga.id}
                     points={lga.points}
                     fill={fill}
-                    fillOpacity={fillOpacity}
-                    stroke={isHovered ? "#1c1917" : "#cbd5e1"}
-                    strokeWidth={isHovered ? 2.5 : 1.2}
+                    fillOpacity={opacity}
+                    stroke={isSelected ? "#b91c1c" : (isHovered ? "#1c1917" : "#cbd5e1")}
+                    strokeWidth={isSelected ? 3.0 : (isHovered ? 2.5 : 1.2)}
                     className="transition-all duration-200 ease-out"
                     style={{
                       filter: isHovered ? "drop-shadow(0px 4px 10px rgba(0,0,0,0.15))" : "none",
@@ -268,7 +337,7 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
           </svg>
 
           {/* Floating Tooltip inside relative container */}
-          {tooltip.visible && (
+          {tooltip.visible && !selectedLgaId && (
             <div
               className="absolute pointer-events-none bg-card/95 backdrop-blur-md border border-border p-3.5 rounded-lg shadow-xl z-30 w-52 flex flex-col gap-1.5 transition-all duration-75"
               style={{ left: tooltip.x, top: tooltip.y }}
@@ -337,7 +406,38 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
             ref={listContainerRef}
             className="flex-1 overflow-y-auto p-2 space-y-1.5"
           >
-            {filteredLgas.length > 0 ? (
+            {selectedLgaId ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-2 py-1.5 border-b border-border bg-stone-100/50 rounded-md">
+                  <span className="font-bold text-stone-700 text-xs">Wards in {selectedLgaObj?.name}</span>
+                  <span className="px-2 py-0.5 bg-stone-200 text-stone-800 text-[10px] font-bold rounded-full">
+                    {activeWards.length}
+                  </span>
+                </div>
+                {activeWards.length > 0 ? (
+                  activeWards.map((ward) => (
+                    <div
+                      key={ward.id}
+                      className="p-3 rounded-lg border border-border bg-card hover:bg-stone-50 flex items-center justify-between text-xs"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <span className="font-extrabold text-foreground">{ward.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          Code: {ward.code}
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full">
+                        Active
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-xs text-muted-foreground py-10 italic">
+                    No wards mapped yet in {selectedLgaObj?.name}.
+                  </div>
+                )}
+              </div>
+            ) : filteredLgas.length > 0 ? (
               filteredLgas.map((lga) => {
                 const isHovered = hoveredLgaId === lga.id;
                 const isSelected = selectedLgaId === lga.id;

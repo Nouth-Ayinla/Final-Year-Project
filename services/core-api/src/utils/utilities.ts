@@ -1,14 +1,21 @@
+import crypto from "crypto";
+
 export const GenerateadminId = () => {
-  return `VT-ADM-${Math.floor(10000 + Math.random() * 90000)}`;
+  const buffer = crypto.randomBytes(4);
+  const randomNum = Math.floor(10000 + (buffer.readUInt32BE(0) % 90000));
+  return `VT-ADM-${randomNum}`;
 };
 
 export const GenerateVoterId = () => {
-  return `VT-VTO-${Math.floor(10000 + Math.random() * 90000)}`;
+  const buffer = crypto.randomBytes(4);
+  const randomNum = Math.floor(10000 + (buffer.readUInt32BE(0) % 90000));
+  return `VT-VTO-${randomNum}`;
 };
 
-
 export const Generatepin = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const buffer = crypto.randomBytes(4);
+  const randomNum = Math.floor(100000 + (buffer.readUInt32BE(0) % 900000));
+  return randomNum.toString();
 };
 
 export const GeneratepinExpiry = () => {

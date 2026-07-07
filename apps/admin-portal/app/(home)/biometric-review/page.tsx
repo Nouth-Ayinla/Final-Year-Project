@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { mockBiometricProfiles, mockVoters } from '@/lib/mocks/data';
+import { axiosInstance } from '@/app/lib/axios';
 
 type BiometricStatus = 'PENDING' | 'ENROLLED' | 'POOR_QUALITY' | 'DUPLICATE_ALERT' | 'FAILED';
 
@@ -22,44 +22,25 @@ type BiometricReviewRecord = {
   updatedAt: string;
 };
 
-const BIOMETRIC_REVIEW_KEY = 'ondo-biometric-review';
-
 export default function BiometricReviewPage() {
   const [records, setRecords] = useState<BiometricReviewRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | BiometricStatus>('ALL');
 
-  useEffect(() => {
+  const fetchRecords = async () => {
     try {
-      const raw = localStorage.getItem(BIOMETRIC_REVIEW_KEY);
-      if (raw) {
-        setRecords(JSON.parse(raw) as BiometricReviewRecord[]);
-      } else {
-        const defaults: BiometricReviewRecord[] = mockBiometricProfiles.map((profile) => {
-          const voter = mockVoters.find((item) => item.id === profile.voterId);
-          return {
-            id: profile.id,
-            voterId: profile.voterId,
-            voterName: voter ? `${voter.firstName} ${voter.lastName}` : profile.voterId,
-            faceStatus: profile.faceEnrollmentStatus as BiometricStatus,
-            fingerprintStatus: profile.fingerprintEnrollmentStatus as BiometricStatus,
-            attempts: profile.verificationAttempts,
-            flagged: false,
-            updatedAt: profile.createdAt,
-          };
-        });
-        localStorage.setItem(BIOMETRIC_REVIEW_KEY, JSON.stringify(defaults));
-        setRecords(defaults);
+      const res = await axiosInstance.get('/biometrics/review-queue');
+      if (res.data && res.data.success) {
+        setRecords(res.data.data as BiometricReviewRecord[]);
       }
-    } catch {
-      setRecords([]);
+    } catch (err) {
+      console.error('Failed to fetch biometric records:', err);
     }
-  }, []);
-
-  const saveRecords = (newRecords: BiometricReviewRecord[]) => {
-    setRecords(newRecords);
-    localStorage.setItem(BIOMETRIC_REVIEW_KEY, JSON.stringify(newRecords));
   };
+
+  useEffect(() => {
+    fetchRecords();
+  }, []);
 
   const filtered = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -71,42 +52,54 @@ export default function BiometricReviewPage() {
     });
   }, [records, searchTerm, statusFilter]);
 
-  const updateRecord = (id: string, updater: (record: BiometricReviewRecord) => BiometricReviewRecord) => {
-    const updated = records.map((record) => (record.id === id ? updater(record) : record));
-    saveRecords(updated);
+  const approveEnrollment = async (id: string) => {
+    try {
+      const res = await axiosInstance.post(`/biometrics/update/${id}`, {
+        faceStatus: 'ENROLLED',
+        fingerprintStatus: 'ENROLLED',
+        flagged: false,
+      });
+      if (res.data && res.data.success) {
+        toast.success('Biometric profile approved successfully');
+        fetchRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to approve profile');
+    }
   };
 
-  const approveEnrollment = (id: string) => {
-    updateRecord(id, (record) => ({
-      ...record,
-      faceStatus: 'ENROLLED',
-      fingerprintStatus: 'ENROLLED',
-      flagged: false,
-      updatedAt: new Date().toISOString(),
-    }));
-    toast.success('Biometric profile approved successfully');
+  const flagProfile = async (id: string) => {
+    try {
+      const res = await axiosInstance.post(`/biometrics/update/${id}`, {
+        faceStatus: 'POOR_QUALITY',
+        flagged: true,
+      });
+      if (res.data && res.data.success) {
+        toast.error('Profile flagged for quality review');
+        fetchRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to flag profile');
+    }
   };
 
-  const flagProfile = (id: string) => {
-    updateRecord(id, (record) => ({
-      ...record,
-      faceStatus: 'POOR_QUALITY',
-      flagged: true,
-      updatedAt: new Date().toISOString(),
-    }));
-    toast.error('Profile flagged for quality review');
-  };
-
-  const requestReenrollment = (id: string) => {
-    updateRecord(id, (record) => ({
-      ...record,
-      faceStatus: 'PENDING',
-      fingerprintStatus: 'PENDING',
-      attempts: record.attempts + 1,
-      flagged: false,
-      updatedAt: new Date().toISOString(),
-    }));
-    toast.success('Re-enrollment request logged');
+  const requestReenrollment = async (id: string) => {
+    try {
+      const res = await axiosInstance.post(`/biometrics/update/${id}`, {
+        faceStatus: 'PENDING',
+        fingerprintStatus: 'PENDING',
+        flagged: false,
+      });
+      if (res.data && res.data.success) {
+        toast.success('Re-enrollment request logged');
+        fetchRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to request re-enrollment');
+    }
   };
 
   return (

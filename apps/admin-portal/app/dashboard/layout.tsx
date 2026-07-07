@@ -33,7 +33,7 @@ export default function DashboardClientLayout({
   if (isCheckingAuth) {
     return (
       <div
-        className="flex h-screen w-screen items-center justify-center bg-background"
+        className="fixed inset-0 flex items-center justify-center bg-background overflow-hidden"
         role="status"
         aria-live="polite"
       >

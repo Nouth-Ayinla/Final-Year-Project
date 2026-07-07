@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../lib/prisma.js";
+import { AuthRequest } from "../../lib/authType.js";
 import { GenerateadminId, Generatepin } from "../../utils/utilities.js";
 import { sendEmail } from "../../lib/email.service.js";
 import { RegisterOfficerTemplate } from "../../utils/emailTemplates.js";
@@ -7,6 +8,7 @@ import bcrypt from "bcrypt";
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 
 export const RegisterOfficer = async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
   const {
     firstName,
     surname,
@@ -19,8 +21,18 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
     LGA,
     education,
     residentialAddress,
+    role,
   } = req.body;
   try {
+    if (role === "SUPER_ADMIN" || role === "ELECTION_ADMIN") {
+      const requestingUserRole = authReq.user?.role;
+      if (requestingUserRole !== "SUPER_ADMIN") {
+        return res.status(403).json({
+          message: "Access denied: Only Super Admin can register an Admin",
+        });
+      }
+    }
+
     if (
       !firstName ||
       !surname ||
@@ -75,6 +87,7 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
         residentialAddress,
         adminId: generatedAdminId,
         activationPin: hashedPin,
+        role: role || "REGISTRATION_OFFICER",
       },
     });
 

@@ -61,7 +61,21 @@ const ONDO_LGAS = [
 export default function RegisterOfficersForm() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const { registerOfficer } = useAuthStore();
+  const { registerOfficer, authUser } = useAuthStore();
+
+  const availableRoles = authUser?.role === "SUPER_ADMIN"
+    ? [
+        { value: "SUPER_ADMIN", label: "Super Admin" },
+        { value: "ELECTION_ADMIN", label: "Election Admin" },
+        { value: "REGISTRATION_OFFICER", label: "Registration Officer" },
+        { value: "MONITORING_OFFICER", label: "Monitoring Officer" },
+        { value: "RESULTS_OFFICER", label: "Results Officer" },
+      ]
+    : [
+        { value: "REGISTRATION_OFFICER", label: "Registration Officer" },
+        { value: "MONITORING_OFFICER", label: "Monitoring Officer" },
+        { value: "RESULTS_OFFICER", label: "Results Officer" },
+      ];
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -149,6 +163,7 @@ export default function RegisterOfficersForm() {
       LGA: "",
       education: "" as any,
       residentialAddress: "",
+      role: "REGISTRATION_OFFICER" as any,
     },
   });
 
@@ -184,6 +199,7 @@ export default function RegisterOfficersForm() {
         formData.append("LGA", values.LGA);
         formData.append("education", values.education);
         formData.append("residentialAddress", values.residentialAddress);
+        formData.append("role", values.role);
         formData.append("profilePicture", file);
 
         const success = await registerOfficer(formData);
@@ -458,6 +474,35 @@ export default function RegisterOfficersForm() {
                           <SelectItem value="PRIMARY">Primary</SelectItem>
                           <SelectItem value="SECONDARY">Secondary</SelectItem>
                           <SelectItem value="TERTIARY">Tertiary</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* ROLE SELECT ENUM */}
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableRoles.map((roleOpt) => (
+                            <SelectItem key={roleOpt.value} value={roleOpt.value}>
+                              {roleOpt.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

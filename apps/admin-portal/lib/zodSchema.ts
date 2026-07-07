@@ -62,6 +62,10 @@ export const RegisterOfficerSchema = z.object({
   residentialAddress: z.string().min(5, {
     message: "Residential address is required",
   }),
+
+  role: z.enum(["SUPER_ADMIN", "ELECTION_ADMIN", "REGISTRATION_OFFICER", "MONITORING_OFFICER", "RESULTS_OFFICER"], {
+    message: "Please select a valid role",
+  }),
 });
 
 export const RegisterVoterSchema = z.object({

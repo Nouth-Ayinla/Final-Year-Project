@@ -42,6 +42,7 @@ export const RegisterOfficerSchema = z.object({
   residentialAddress: z.string().min(5, {
     message: "Residential address is required",
   }),
+  role: z.enum(["SUPER_ADMIN", "ELECTION_ADMIN", "REGISTRATION_OFFICER", "MONITORING_OFFICER", "RESULTS_OFFICER"]).optional(),
 });
 
 export const adminLoginSchema = z.object({
@@ -52,4 +53,16 @@ export const adminLoginSchema = z.object({
   password: z
     .string()
     .min(6, { message: "Password must not be less than 6 characters" }),
+});
+
+export const CreateWardSchema = z.object({
+  name: z.string().trim().min(2, {
+    message: "Ward name must be at least 2 characters",
+  }),
+  code: z.string().trim().min(2, {
+    message: "Ward code must be at least 2 characters",
+  }),
+  lgaName: z.string().trim().min(2, {
+    message: "Local Government Area is required",
+  }),
 });

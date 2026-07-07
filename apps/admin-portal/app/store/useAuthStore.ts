@@ -126,11 +126,18 @@ export const useAuthStore = create<AuthStore>((set) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/admin/logout");
-
-      set({ authUser: null });
-
+      
+      set({ authUser: null, profile: null });
+      
+      // Clear localStorage
+      localStorage.clear();
+      
       toast.success("Logged out successfully");
+      
+      // Securely redirect to login and force full page reload to clear in-memory states
+      window.location.href = "/login";
     } catch (error: any) {
+      console.error("Logout error:", error);
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   },

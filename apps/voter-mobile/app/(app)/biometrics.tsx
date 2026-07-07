@@ -341,16 +341,32 @@ export default function BiometricsTabScreen() {
 
             <View style={styles.actionsBox}>
               <TouchableOpacity
-                style={styles.primaryBtn}
+                style={[
+                  styles.primaryBtn,
+                  (fingerprintAuthenticating || fingerprintSuccess) && {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    shadowOpacity: 0,
+                    elevation: 0,
+                  }
+                ]}
                 onPress={handleFingerprintRegister}
-                disabled={fingerprintAuthenticating}
+                disabled={fingerprintAuthenticating || fingerprintSuccess}
               >
                 {fingerprintAuthenticating ? (
-                  <ActivityIndicator color="#4e1900" size="small" />
+                  <ActivityIndicator color="#e1bfb2" size="small" />
                 ) : (
                   <>
-                    <Text style={styles.primaryBtnText}>Verify and Enroll Touch ID</Text>
-                    <Ionicons name="finger-print" size={18} color="#4e1900" />
+                    <Text style={[
+                      styles.primaryBtnText,
+                      fingerprintSuccess && { color: 'rgba(255, 255, 255, 0.4)' }
+                    ]}>
+                      {fingerprintSuccess ? 'Fingerprint Verified' : 'Verify and Enroll Touch ID'}
+                    </Text>
+                    <Ionicons
+                      name="finger-print"
+                      size={18}
+                      color={fingerprintSuccess ? 'rgba(255, 255, 255, 0.4)' : '#4e1900'}
+                    />
                   </>
                 )}
               </TouchableOpacity>

@@ -57,9 +57,9 @@ export const adminNavigation: AdminNavItem[] = [
     allowedRoles: ['SUPER_ADMIN', 'ELECTION_ADMIN'],
   },
   {
-    path: '/geography',
-    label: 'Geography',
-    description: 'Manage LGAs, wards, and polling units.',
+    path: '/wards',
+    label: 'Wards Management',
+    description: 'Manage and map specific wards under their LGAs.',
     icon: MapPinned,
     status: 'Foundation',
     allowedRoles: ['SUPER_ADMIN', 'ELECTION_ADMIN'],

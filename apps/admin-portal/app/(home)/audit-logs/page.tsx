@@ -6,7 +6,7 @@ import { Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { mockAuditLogs } from '@/lib/mocks/data';
+import { axiosInstance } from '@/app/lib/axios';
 
 type AuditAction =
   | 'LOGIN_SUCCESS'
@@ -38,25 +38,23 @@ type AuditLogRow = {
   timestamp: string;
 };
 
-const AUDIT_LOGS_KEY = 'ondo-audit-logs';
-
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLogRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<'ALL' | AuditAction>('ALL');
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(AUDIT_LOGS_KEY);
-      if (!raw) {
-        localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(mockAuditLogs));
-        setLogs(mockAuditLogs as AuditLogRow[]);
-      } else {
-        setLogs(JSON.parse(raw) as AuditLogRow[]);
+    const fetchLogs = async () => {
+      try {
+        const res = await axiosInstance.get('/audit-logs/list');
+        if (res.data && res.data.success) {
+          setLogs(res.data.data as AuditLogRow[]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
       }
-    } catch {
-      setLogs([]);
-    }
+    };
+    fetchLogs();
   }, []);
 
   const downloadCsv = (filename: string, rows: AuditLogRow[]) => {

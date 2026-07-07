@@ -22,6 +22,7 @@ export const ActivateAdminAccount = async (req: Request, res: Response) => {
         password: true,
         isActivated: true,
         activationPin: true,
+        createdAt: true,
       },
     });
 
@@ -34,6 +35,14 @@ export const ActivateAdminAccount = async (req: Request, res: Response) => {
     if (user.isActivated) {
       return res.status(400).json({
         message: "Account already activated",
+      });
+    }
+
+    const pinAgeMs = Date.now() - new Date(user.createdAt).getTime();
+    const pinTtlMs = 24 * 60 * 60 * 1000; // 24 hours
+    if (pinAgeMs > pinTtlMs) {
+      return res.status(400).json({
+        message: "Activation PIN has expired. Please contact your system administrator to generate a new PIN.",
       });
     }
 
