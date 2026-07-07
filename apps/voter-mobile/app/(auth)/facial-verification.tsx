@@ -20,10 +20,15 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useAuthStore } from '@/store/useAuthStore';
+
+
 type Stage = 'permission' | 'camera' | 'verifying' | 'success';
 
 export default function FacialVerificationScreen() {
   const router = useRouter();
+  const voter = useAuthStore((state) => state.voter);
+  const { login, getBiometricCredentials, setBiometricVerified } = useAuthStore();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [stage, setStage] = useState<Stage>('permission');
@@ -42,9 +47,9 @@ export default function FacialVerificationScreen() {
     }
   }, [permission]);
 
-  // Border pulsing loop
+  // Border pulsing loop - only in camera stage, not during verifying
   useEffect(() => {
-    if (stage === 'camera' || stage === 'verifying') {
+    if (stage === 'camera') {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -96,6 +101,26 @@ export default function FacialVerificationScreen() {
   });
 
   const handleStartScan = async () => {
+    // Get voter ID from stored credentials (for login mode) or current voter (for enrollment mode)
+    let voterId = voter?.voterId;
+    
+    if (!voterId) {
+      // Login mode: get voter ID from stored credentials
+      const credentials = await getBiometricCredentials();
+      voterId = credentials?.voterId;
+      
+      if (!voterId) {
+        // No credentials and not authenticated - redirect to login
+        Alert.alert(
+          'Credentials Required',
+          'Please sign in with your ID and password first to enable biometric login.',
+          [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+        );
+        return;
+      }
+    }
+    
+    console.log('Voter ID:', voterId);
     if (stage === 'permission') {
       const res = await requestPermission();
       if (!res.granted) {
@@ -118,17 +143,37 @@ export default function FacialVerificationScreen() {
       setStage('verifying');
 
       // Verify photo against profile database
-      const result = await electionService.verifyBiometric('', photo.uri);
+      const result = await electionService.verifyBiometric(voterId || '', photo.uri);
 
-      if (result.success && result.matched) {
+      if (result.matched) {
         setStage('success');
-        setTimeout(() => router.replace('/(auth)/biometric'), 1800);
+        
+        // Check if this is a login attempt (no authenticated user)
+        if (!voter) {
+          // Login with stored credentials after successful face verification
+          const credentials = await getBiometricCredentials();
+          if (credentials) {
+            const loginSuccess = await login(credentials);
+            if (loginSuccess) {
+              setBiometricVerified(true);
+              router.replace('/(app)/dashboard');
+            } else {
+              router.replace('/(auth)/login');
+            }
+          } else {
+            // No credentials stored, redirect to login
+            router.replace('/(auth)/login');
+          }
+        } else {
+          // Enrollment mode - go to biometric setup
+          router.replace('/(auth)/biometric');
+        }
       } else {
         setStage('camera');
         Alert.alert(
           'Scan Failed',
-          result.message || 'Face details did not match voter record profile. Please retry.',
-          [{ text: 'Retry', onPress: () => setStage('camera') }]
+          result.message || 'Face details did not match voter record profile. Please try again.',
+          [{ text: 'OK' }]
         );
       }
     } catch (err) {
@@ -160,18 +205,28 @@ export default function FacialVerificationScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Progress Tracker Banner */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressItem}>
-            <Ionicons name="checkmark-circle" size={18} color="#a1d494" />
-            <Text style={[styles.progressText, styles.textCompleted]}>Verified ID</Text>
+        {/* Progress Tracker Banner - Only show in enrollment mode */}
+        {voter && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#a1d494" />
+              <Text style={[styles.progressText, styles.textCompleted]}>Verified ID</Text>
+            </View>
+            <View style={styles.progressDivider} />
+            <View style={styles.progressItem}>
+              <View style={styles.progressPulseDot} />
+              <Text style={[styles.progressText, styles.textActive]}>Biometric Link</Text>
+            </View>
           </View>
-          <View style={styles.progressDivider} />
-          <View style={styles.progressItem}>
-            <View style={styles.progressPulseDot} />
-            <Text style={[styles.progressText, styles.textActive]}>Biometric Link</Text>
+        )}
+
+        {/* Login Mode Header - Only show in login mode */}
+        {!voter && (
+          <View style={styles.loginHeader}>
+            <Text style={styles.loginTitle}>Face Login</Text>
+            <Text style={styles.loginSubtitle}>Position your face within the frame to verify your identity</Text>
           </View>
-        </View>
+        )}
 
 
 
@@ -226,7 +281,9 @@ export default function FacialVerificationScreen() {
               {stage === 'success' && (
                 <View style={styles.successOverlay}>
                   <Ionicons name="checkmark-circle" size={80} color="#a1d494" />
-                  <Text style={styles.successOverlayText}>Enrollment Complete</Text>
+                  <Text style={styles.successOverlayText}>
+                    {voter ? 'Enrollment Complete' : 'Login Successful'}
+                  </Text>
                 </View>
               )}
             </View>
@@ -246,59 +303,46 @@ export default function FacialVerificationScreen() {
               </Text>
             </View>
           </View>
-
-          <View style={styles.tipsCard}>
-            <View style={[styles.tipsIconContainer, styles.iconContainerBgTertiary]}>
-              <Ionicons name="shield-checkmark" size={20} color="#acc7ff" />
-            </View>
-            <View style={styles.tipsTextContainer}>
-              <Text style={styles.tipsTitle}>Encryption Guarantee</Text>
-              <Text style={styles.tipsDesc}>
-                Your biometric signature is hashed locally and never stored as an image.
-              </Text>
-            </View>
-          </View>
         </View>
 
         {/* Footer Actions */}
         <View style={styles.actionSection}>
-          <TouchableOpacity
-            style={[
-              styles.scanActionButton,
-              stage === 'verifying' && styles.buttonVerifying,
-              stage === 'success' && styles.buttonSuccess,
-            ]}
-            onPress={handleStartScan}
-            disabled={stage === 'verifying' || stage === 'success'}
-            activeOpacity={0.8}
-          >
-            {stage === 'verifying' ? (
-              <ActivityIndicator color="#4e1900" size="small" />
-            ) : (
-              <>
-                <Text style={styles.scanActionButtonText}>
-                  {stage === 'permission'
-                    ? 'Grant Camera Permission'
-                    : stage === 'success'
-                      ? 'Success'
+          {/* Only show scan button when not in success stage */}
+          {stage !== 'success' && (
+            <TouchableOpacity
+              style={[
+                styles.scanActionButton,
+                stage === 'verifying' && styles.buttonVerifying,
+              ]}
+              onPress={handleStartScan}
+              disabled={stage === 'verifying'}
+              activeOpacity={0.8}
+            >
+              {stage === 'verifying' ? (
+                <ActivityIndicator color="#4e1900" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.scanActionButtonText}>
+                    {stage === 'permission'
+                      ? 'Grant Camera Permission'
                       : 'Start Scan'}
-                </Text>
-                <Ionicons
-                  name={stage === 'success' ? 'checkmark' : 'qr-code-outline'}
-                  size={18}
-                  color="#4e1900"
-                />
-              </>
-            )}
-          </TouchableOpacity>
+                  </Text>
+                  <Ionicons name="qr-code-outline" size={18} color="#4e1900" />
+                </>
+              )}
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity
-            style={styles.skipActionButton}
-            onPress={() => router.replace('/(auth)/biometric')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.skipActionButtonText}>I'll do this later</Text>
-          </TouchableOpacity>
+          {/* Only show skip button in enrollment mode, not login mode */}
+          {voter && stage !== 'success' && (
+            <TouchableOpacity
+              style={styles.skipActionButton}
+              onPress={() => router.replace('/(auth)/biometric')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.skipActionButtonText}>I'll do this later</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -374,6 +418,24 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#ffb597',
   },
+  loginHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  loginTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#f7ddd4',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  loginSubtitle: {
+    fontSize: 14,
+    color: '#e1bfb2',
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 20,
+  },
   header: {
     alignItems: 'center',
     marginBottom: 32,
@@ -409,6 +471,7 @@ const styles = StyleSheet.create({
     borderColor: '#ffb597',
     padding: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    overflow: 'hidden',
   },
   scannerRingInner: {
     flex: 1,

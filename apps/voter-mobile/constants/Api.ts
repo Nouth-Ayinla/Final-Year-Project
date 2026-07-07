@@ -16,12 +16,15 @@ const getBaseUrl = (): string => {
     }
     // Dynamically get the host machine's LAN IP from Expo CLI/Metro
     const hostUri = Constants.expoConfig?.hostUri; // e.g. "192.168.92.124:8081"
+
+    console.log(hostUri);
+    
     if (hostUri) {
       const ip = hostUri.split(':')[0];
       return `http://${ip}:5001`;
     }
     // Fallback if hostUri is unavailable (e.g. Android Emulator fallback)
-    return 'http://10.0.2.2:5001';
+    return 'http://10.112.32.155:5001';
   }
   return 'https://api.ondodecide.com';
 };

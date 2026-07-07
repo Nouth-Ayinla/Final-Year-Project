@@ -173,6 +173,9 @@ export default function BiometricsTabScreen() {
 
   // --- Face scanning handler ---
   const handleFaceRegister = async () => {
+    const voterId = voter?.voterId;
+    
+    console.log('Voter ID:', voterId);
     if (!cameraPermission?.granted) {
       const res = await requestCameraPermission();
       if (!res.granted) {
@@ -188,15 +191,17 @@ export default function BiometricsTabScreen() {
     if (!cameraRef.current) return;
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.75 });
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.75, skipProcessing: false });
       if (!photo?.uri) throw new Error('Capture failed');
 
       setFaceStage('verifying');
 
+      console.log("hello world");
+      
       // Verify and register the photo
-      const result = await electionService.verifyBiometric('', photo.uri);
+      const result = await electionService.verifyBiometric(voterId || '', photo.uri);
 
-      if (result.success && result.matched) {
+      if (result.matched) {
         setFaceStage('success');
         setTimeout(() => {
           Alert.alert(

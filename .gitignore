@@ -53,7 +53,7 @@ frontend/build/
 # Ignore all folders except frontend
 admin/
 api/
-backend/
+# backend/
 docs/
 mobile/
 frontend/.env.local

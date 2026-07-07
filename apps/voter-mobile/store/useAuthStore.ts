@@ -19,6 +19,7 @@ import { authService, VoterData, LoginPayload, ActivatePayload } from '@/service
 import { TOKEN_KEY } from '@/services/apiClient';
 
 const VOTER_STORE_KEY = 'ondodecide_voter';
+const CREDENTIALS_KEY = 'ondodecide_credentials';
 
 /** Strip the hashed password the backend mistakenly includes in responses. */
 function sanitiseVoter(v: any): VoterData {
@@ -60,6 +61,9 @@ interface AuthState {
   setBiometricSkipped: (skipped: boolean)          => void;
   clearError:          ()                          => void;
   initialize:          ()                          => Promise<void>;
+  saveBiometricCredentials: (identifier: string, password: string, voterId: string) => Promise<void>;
+  getBiometricCredentials: () => Promise<{ identifier: string; password: string; voterId: string } | null>;
+  clearBiometricCredentials: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -95,6 +99,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authService.login(payload);
       if (response.data) {
         const voter = await mergeAndStore(response.data);
+        // Save credentials with voter ID for potential biometric login
+        await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({
+          identifier: payload.identifier,
+          password: payload.password,
+          voterId: response.data.voterId,
+        }));
         set({ voter, isAuthenticated: true, isBiometricVerified: false, biometricSkipped: false, isLoading: false });
         return true;
       }
@@ -132,7 +142,30 @@ export const useAuthStore = create<AuthState>((set) => ({
     try { await authService.logout(); } catch { /* always clear local state */ }
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(VOTER_STORE_KEY);
+    // Note: Keep biometric credentials for future logins
     set({ voter: null, isAuthenticated: false, isBiometricVerified: false, biometricSkipped: false, isLoading: false, error: null });
+  },
+
+  // ── Biometric Credentials ───────────────────────────────────────────────────
+  saveBiometricCredentials: async (identifier: string, password: string, voterId: string) => {
+    const credentials = JSON.stringify({ identifier, password, voterId });
+    await SecureStore.setItemAsync(CREDENTIALS_KEY, credentials);
+  },
+
+  getBiometricCredentials: async () => {
+    try {
+      const raw = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+      if (raw) {
+        return JSON.parse(raw) as { identifier: string; password: string; voterId: string };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  clearBiometricCredentials: async () => {
+    await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
   },
 
   setBiometricVerified: (verified) => set({ isBiometricVerified: verified }),
