@@ -8,6 +8,35 @@
  */
 import { apiClient } from './apiClient';
 import { API_ENDPOINTS } from '@/constants/Api';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+import axios from "axios";
+
+// Get the host machine's IP for the face verification service (same logic as Api.ts)
+const getFaceServiceUrl = (): string => {
+  if (__DEV__) {
+    if (Platform.OS === 'ios') {
+      const url = 'http://localhost:8000';
+      console.log('Face Service URL (iOS):', url);
+      return url;
+    }
+    const hostUri = Constants.expoConfig?.hostUri;
+    console.log('Host URI:', hostUri);
+    if (hostUri) {
+      const ip = hostUri.split(':')[0];
+      const url = `http://${ip}:8000`;
+      console.log('Face Service URL (Android):', url);
+      return url;
+    }
+    const fallback = 'http://192.168.1.169:8000';
+    console.log('Face Service URL (Fallback):', fallback);
+    return fallback;
+  }
+  return 'https://face.ondodecide.com'; // Production URL
+};
+
+const FACE_SERVICE_URL = getFaceServiceUrl();
 
 export type ElectionStatus = 'DRAFT' | 'UPCOMING' | 'ACTIVE' | 'CLOSED';
 
@@ -123,26 +152,35 @@ export const electionService = {
   },
 
   verifyBiometric: async (
-    electionId: string,
+    voterId: string,
     imageUri: string
-  ): Promise<{ success: boolean; matched: boolean; similarity: number; message?: string }> => {
+  ): Promise<any> => {
+    console.log('Starting face verification...');
+    console.log('Voter ID:', voterId); //@note we console.logs the values right here 
+    console.log('Image URI:', imageUri);
+    console.log('Face Service URL:', FACE_SERVICE_URL);
+
     const formData = new FormData();
-    formData.append('electionId', electionId);
+    formData.append('voter_id', voterId);
     formData.append('image', {
       uri: imageUri,
       type: 'image/jpeg',
       name: 'verify_face.jpg',
     } as any);
 
-    const { data } = await apiClient.post(
-      API_ENDPOINTS.VOTER_VERIFY_BIOMETRIC,
+    console.log('FormData prepared, making request...');
+
+    // Let Axios set the Content-Type header automatically with the correct boundary
+    const response = await axios.post(
+      `${FACE_SERVICE_URL}/api/v1/face/verify`,
       formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        timeout: 30000,
       }
     );
-    return data;
+
+    console.log('Response received:', response.data); //@audit we console.logs the error 
+
+    return response.data;
   },
 };

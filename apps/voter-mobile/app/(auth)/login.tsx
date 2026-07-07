@@ -24,7 +24,7 @@ const VOTER_STORE_KEY = 'ondodecide_voter';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, error, clearError, setBiometricVerified } = useAuthStore();
+  const { login, isLoading, error, clearError, setBiometricVerified, getBiometricCredentials } = useAuthStore();
   const { authenticate } = useBiometric();
 
   const [identifier, setIdentifier] = useState('');
@@ -43,28 +43,43 @@ export default function LoginScreen() {
     }
   };
 
-  const handleBiometricLogin = async () => {
+  const handleFingerprintLogin = async () => {
     try {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      const voterJson = await SecureStore.getItemAsync(VOTER_STORE_KEY);
+      // Check if biometric credentials are stored
+      const credentials = await getBiometricCredentials();
       
-      if (token && voterJson) {
-        const success = await authenticate();
-        if (success) {
-          setBiometricVerified(true);
-          await useAuthStore.getState().initialize();
-          router.replace('/(app)/dashboard');
-        }
-      } else {
+      console.log('Fingerprint login check:');
+      console.log('Credentials exist:', !!credentials);
+      
+      if (!credentials) {
         Alert.alert(
-          'Sign In Required',
-          'Please sign in with your ID and password first to configure biometrics on this device.',
+          'Credentials Required',
+          'Please sign in with your ID and password first. Your credentials will be saved for future biometric logins.',
           [{ text: 'OK' }]
         );
+        return;
+      }
+
+      // Verify device fingerprint
+      const biometricSuccess = await authenticate();
+      if (!biometricSuccess) {
+        return;
+      }
+
+      // Use stored credentials to login
+      const loginSuccess = await login(credentials);
+      if (loginSuccess) {
+        setBiometricVerified(true);
+        router.replace('/(app)/dashboard');
       }
     } catch (err) {
-      console.error('Biometric login error:', err);
+      console.error('Fingerprint login error:', err);
     }
+  };
+
+  const handleFaceLogin = () => {
+    // Navigate to facial verification screen for face capture and login
+    router.push('/(auth)/facial-verification');
   };
 
   return (
@@ -183,14 +198,14 @@ export default function LoginScreen() {
             <View style={styles.biometricsContainer}>
               <TouchableOpacity
                 style={[styles.biometricButton, styles.biometricButtonActive]}
-                onPress={handleBiometricLogin}
+                onPress={handleFaceLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="scan" size={26} color="#ffb597" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.biometricButton, styles.biometricButtonActive]}
-                onPress={handleBiometricLogin}
+                onPress={handleFingerprintLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="finger-print" size={26} color="#ffb597" />

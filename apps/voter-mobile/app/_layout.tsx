@@ -9,16 +9,20 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Colors } from '@/constants/Colors';
+import { useFonts } from 'expo-font';
 
 export default function RootLayout() {
   const isInitializing = useAuthStore((s) => s.isInitializing);
   const initialize = useAuthStore((s) => s.initialize);
+  const [fontsLoaded] = useFonts({
+    Ionicons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
+  });
 
   useEffect(() => {
     initialize();
   }, []);
 
-  if (isInitializing) {
+  if (isInitializing || !fontsLoaded) {
     return (
       <View style={styles.splash}>
         <StatusBar style="light" />
