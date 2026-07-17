@@ -27,6 +27,7 @@ import {
   CalendarDays,
   Activity,
   Fingerprint,
+  BadgeCheck,
 } from "lucide-react";
 
 export default function AdminHomePage() {
@@ -115,6 +116,12 @@ export default function AdminHomePage() {
       description: "View all elections",
       href: "/election",
       icon: CalendarDays,
+    },
+    {
+      title: "Manage Candidates",
+      description: "Manage candidates and parties",
+      href: "/candidates",
+      icon: BadgeCheck,
     },
   ];
 

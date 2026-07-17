@@ -21,6 +21,7 @@ import {
   Fingerprint,
   Flag,
   MapPinned,
+  BadgeCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/app/store/useAuthStore";
@@ -67,6 +68,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Parties",
       url: "/parties",
       icon: <Flag />,
+      roles: ["SUPER_ADMIN", "ELECTION_ADMIN"],
+    },
+    {
+      title: "Candidates",
+      url: "/candidates",
+      icon: <BadgeCheck />,
       roles: ["SUPER_ADMIN", "ELECTION_ADMIN"],
     },
     {

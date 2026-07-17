@@ -81,6 +81,86 @@ async function main() {
   for (const p of partiesData) await prisma.party.create({ data: p });
   console.log(`   ✓ ${partiesData.length} parties seeded`);
 
+  // ── 2b. Wards ───────────────────────────────────────────────
+  console.log('\n[2b] Seeding wards...');
+  const wardsData = [
+    // Akure South
+    { name: 'Ward 1', code: 'OND-AKS-W01', lgaName: 'Akure South' },
+    { name: 'Ward 2', code: 'OND-AKS-W02', lgaName: 'Akure South' },
+    { name: 'Ward 3', code: 'OND-AKS-W03', lgaName: 'Akure South' },
+    { name: 'Ward 4', code: 'OND-AKS-W04', lgaName: 'Akure South' },
+    { name: 'Ward 5', code: 'OND-AKS-W05', lgaName: 'Akure South' },
+    // Akure North
+    { name: 'Ward 1', code: 'OND-AKN-W01', lgaName: 'Akure North' },
+    { name: 'Ward 2', code: 'OND-AKN-W02', lgaName: 'Akure North' },
+    { name: 'Ward 3', code: 'OND-AKN-W03', lgaName: 'Akure North' },
+    // Ondo West
+    { name: 'Ward 1', code: 'OND-ONW-W01', lgaName: 'Ondo West' },
+    { name: 'Ward 2', code: 'OND-ONW-W02', lgaName: 'Ondo West' },
+    { name: 'Ward 3', code: 'OND-ONW-W03', lgaName: 'Ondo West' },
+    { name: 'Ward 4', code: 'OND-ONW-W04', lgaName: 'Ondo West' },
+    // Ondo East
+    { name: 'Ward 1', code: 'OND-ONE-W01', lgaName: 'Ondo East' },
+    { name: 'Ward 2', code: 'OND-ONE-W02', lgaName: 'Ondo East' },
+    { name: 'Ward 3', code: 'OND-ONE-W03', lgaName: 'Ondo East' },
+    // Odigbo
+    { name: 'Ward 1', code: 'OND-ODG-W01', lgaName: 'Odigbo' },
+    { name: 'Ward 2', code: 'OND-ODG-W02', lgaName: 'Odigbo' },
+    { name: 'Ward 3', code: 'OND-ODG-W03', lgaName: 'Odigbo' },
+    { name: 'Ward 4', code: 'OND-ODG-W04', lgaName: 'Odigbo' },
+    // Ile Oluji/Okeigbo
+    { name: 'Ward 1', code: 'OND-ILO-W01', lgaName: 'Ile Oluji/Okeigbo' },
+    { name: 'Ward 2', code: 'OND-ILO-W02', lgaName: 'Ile Oluji/Okeigbo' },
+    { name: 'Ward 3', code: 'OND-ILO-W03', lgaName: 'Ile Oluji/Okeigbo' },
+    // Idanre
+    { name: 'Ward 1', code: 'OND-IDA-W01', lgaName: 'Idanre' },
+    { name: 'Ward 2', code: 'OND-IDA-W02', lgaName: 'Idanre' },
+    { name: 'Ward 3', code: 'OND-IDA-W03', lgaName: 'Idanre' },
+    // Ifedore
+    { name: 'Ward 1', code: 'OND-IFD-W01', lgaName: 'Ifedore' },
+    { name: 'Ward 2', code: 'OND-IFD-W02', lgaName: 'Ifedore' },
+    { name: 'Ward 3', code: 'OND-IFD-W03', lgaName: 'Ifedore' },
+    // Irele
+    { name: 'Ward 1', code: 'OND-IRE-W01', lgaName: 'Irele' },
+    { name: 'Ward 2', code: 'OND-IRE-W02', lgaName: 'Irele' },
+    { name: 'Ward 3', code: 'OND-IRE-W03', lgaName: 'Irele' },
+    // Ese Odo
+    { name: 'Ward 1', code: 'OND-ESO-W01', lgaName: 'Ese Odo' },
+    { name: 'Ward 2', code: 'OND-ESO-W02', lgaName: 'Ese Odo' },
+    { name: 'Ward 3', code: 'OND-ESO-W03', lgaName: 'Ese Odo' },
+    // Ogun Waterside
+    { name: 'Ward 1', code: 'OND-OGW-W01', lgaName: 'Ogun Waterside' },
+    { name: 'Ward 2', code: 'OND-OGW-W02', lgaName: 'Ogun Waterside' },
+    { name: 'Ward 3', code: 'OND-OGW-W03', lgaName: 'Ogun Waterside' },
+    // Ose
+    { name: 'Ward 1', code: 'OND-OSE-W01', lgaName: 'Ose' },
+    { name: 'Ward 2', code: 'OND-OSE-W02', lgaName: 'Ose' },
+    { name: 'Ward 3', code: 'OND-OSE-W03', lgaName: 'Ose' },
+    { name: 'Ward 4', code: 'OND-OSE-W04', lgaName: 'Ose' },
+    // Akoko North-East
+    { name: 'Ward 1', code: 'OND-ANE-W01', lgaName: 'Akoko North-East' },
+    { name: 'Ward 2', code: 'OND-ANE-W02', lgaName: 'Akoko North-East' },
+    { name: 'Ward 3', code: 'OND-ANE-W03', lgaName: 'Akoko North-East' },
+    // Akoko North-West
+    { name: 'Ward 1', code: 'OND-ANW-W01', lgaName: 'Akoko North-West' },
+    { name: 'Ward 2', code: 'OND-ANW-W02', lgaName: 'Akoko North-West' },
+    // Akoko South-West
+    { name: 'Ward 1', code: 'OND-ASW-W01', lgaName: 'Akoko South-West' },
+    { name: 'Ward 2', code: 'OND-ASW-W02', lgaName: 'Akoko South-West' },
+    { name: 'Ward 3', code: 'OND-ASW-W03', lgaName: 'Akoko South-West' },
+    // Akoko South-East
+    { name: 'Ward 1', code: 'OND-ASE-W01', lgaName: 'Akoko South-East' },
+    { name: 'Ward 2', code: 'OND-ASE-W02', lgaName: 'Akoko South-East' },
+    // Owo
+    { name: 'Ward 1', code: 'OND-OWO-W01', lgaName: 'Owo' },
+    { name: 'Ward 2', code: 'OND-OWO-W02', lgaName: 'Owo' },
+    { name: 'Ward 3', code: 'OND-OWO-W03', lgaName: 'Owo' },
+    { name: 'Ward 4', code: 'OND-OWO-W04', lgaName: 'Owo' },
+  ];
+
+  for (const w of wardsData) await prisma.ward.create({ data: w });
+  console.log(`   ✓ ${wardsData.length} wards seeded across all LGAs`);
+
   // ── 3. Super Admin (upsert to preserve) ───────────────────────────────
   console.log('\n[3/10] Upserting Super Admin...');
   const defaultPassword = '@12345678';
@@ -273,14 +353,13 @@ async function main() {
   }
   console.log(`   ✓ ${candidatesData.length} candidates seeded`);
 
-  // ── 7. Voters — 87 Participants ────────────────────────────────────────
+  // -- 7. Voters - 86 Participants (all Ondo State) -------------------------
   // Demographic breakdown (Table 4.7):
-  //   Age 18-35: 34   Age 36-55: 31   Age 56+: 22
-  //   Urban: 51       Rural: 36
-  //
-  // Urban LGAs (Lagos, Abuja, Port Harcourt, Akure South)  → indices 0-50
-  // Rural LGAs (Ondo State rural)                          → indices 51-86
-  console.log('\n[7/10] Seeding 87 voters...');
+  //   Age 18-35: 34   Age 36-55: 31   Age 56+: 21
+  //   Urban: 51 (Akure South, Akure North, Ondo West, Owo)
+  //   Rural: 35 (Odigbo, Ese Odo, Ile Oluji/Okeigbo, Ifedore, Ondo East,
+  //              Idanre, Irele, Ogun Waterside, Ose, Akoko North-East)
+  console.log('\n[7/10] Seeding 86 voters (all Ondo State)...');
 
   type VoterDef = {
     firstName: string; surname: string; otherName?: string;
@@ -289,106 +368,105 @@ async function main() {
     education: EducationLevel; residentialAddress: string;
   };
 
-  // ── Urban voters (51) ─────────────────────────────────────────────────
+  // -- Urban voters (51) -------------------------------------------------------
   //   Age 18-35 (urban): 24    Age 36-55 (urban): 18   Age 56+ (urban): 9
   const urbanVoters: VoterDef[] = [
-    // ── Age 18-35 urban (24) ──
-    { firstName:'Tolu',      surname:'Adeyemi',   DOB:'2002-03-14', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Ikeja',       ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'12 Allen Avenue, Ikeja, Lagos' },
-    { firstName:'Emeka',     surname:'Obi',       DOB:'2001-07-22', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Ikeja',       ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'5 Oba Akran Avenue, Ikeja, Lagos' },
-    { firstName:'Sade',      surname:'Balogun',   DOB:'2003-11-03', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Surulere',    ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'22 Adeniran Ogunsanya, Surulere' },
-    { firstName:'Chidi',     surname:'Okafor',    DOB:'2000-05-18', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Lagos Island', ward:'Ward 4', education:EducationLevel.TERTIARY, residentialAddress:'7 Marina Road, Lagos Island' },
-    { firstName:'Aisha',     surname:'Musa',      DOB:'2004-01-30', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Abuja',    LGA:'Gwagwalada',  ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'34 Phase 2, Gwagwalada, Abuja' },
-    { firstName:'Kunle',     surname:'Afolabi',   DOB:'1999-09-09', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Abuja',    LGA:'Abaji',       ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'10 Kuje Road, Abaji, Abuja' },
-    { firstName:'Blessing',  surname:'Nwachukwu', DOB:'2002-12-25', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 5',education:EducationLevel.TERTIARY,  residentialAddress:'18 Aba Road, Port Harcourt' },
-    { firstName:'Uche',      surname:'Okoro',     DOB:'2001-04-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 6',education:EducationLevel.TERTIARY,  residentialAddress:'3 Trans-Amadi Road, Port Harcourt' },
-    { firstName:'Fatima',    surname:'Abdullahi', DOB:'2003-08-19', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Abuja',    LGA:'Kuje',        ward:'Ward 3', education:EducationLevel.SECONDARY,  residentialAddress:'27 Airport Road, Kuje, Abuja' },
-    { firstName:'Gbenga',    surname:'Ogundimu',  DOB:'2000-02-14', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Alimosho',    ward:'Ward 7', education:EducationLevel.TERTIARY,  residentialAddress:'99 Egan Road, Alimosho, Lagos' },
-    { firstName:'Ngozi',     surname:'Chukwu',    DOB:'1999-06-06', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Oshodi-Isolo',ward:'Ward 8', education:EducationLevel.TERTIARY, residentialAddress:'44 Oshodi Apapa Expressway, Lagos' },
-    { firstName:'Musa',      surname:'Ibrahim',   DOB:'2003-10-10', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Abuja',    LGA:'Bwari',       ward:'Ward 4', education:EducationLevel.SECONDARY,  residentialAddress:'8 Bwari Area Council, Abuja' },
-    { firstName:'Adaeze',    surname:'Igwe',      DOB:'2001-03-28', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Rivers',   LGA:'Obio-Akpor',  ward:'Ward 9', education:EducationLevel.TERTIARY,  residentialAddress:'55 Rumuola Road, Port Harcourt' },
-    { firstName:'Taiwo',     surname:'Adekoya',   DOB:'2000-07-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Kosofe',      ward:'Ward 10',education:EducationLevel.TERTIARY,  residentialAddress:'14 Kosofe Estate, Lagos' },
-    { firstName:'Amaka',     surname:'Onuoha',    DOB:'2002-09-23', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Mushin',      ward:'Ward 11',education:EducationLevel.SECONDARY,  residentialAddress:'6 Mushin Market Road, Lagos' },
-    { firstName:'Oluwaseun', surname:'Adesola',   DOB:'2003-05-12', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Ikeja',       ward:'Ward 5', education:EducationLevel.TERTIARY,  residentialAddress:'2 Toyin Street, Ikeja, Lagos' },
-    { firstName:'Rejoice',   surname:'Eze',       DOB:'1999-11-20', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Abuja',    LGA:'Kuje',        ward:'Ward 6', education:EducationLevel.TERTIARY,  residentialAddress:'30 Kuje Central, Abuja' },
-    { firstName:'Ridwan',    surname:'Salami',    DOB:'2001-01-08', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Agege',       ward:'Ward 12',education:EducationLevel.SECONDARY,  residentialAddress:'17 Agege Motor Road, Lagos' },
-    { firstName:'Peace',     surname:'Okeke',     DOB:'2004-04-16', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 13',education:EducationLevel.TERTIARY, residentialAddress:'9 Stadium Road, Port Harcourt' },
-    { firstName:'Dapo',      surname:'Fashola',   DOB:'2000-08-04', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Surulere',    ward:'Ward 14',education:EducationLevel.TERTIARY,  residentialAddress:'18 Western Avenue, Surulere, Lagos' },
-    { firstName:'Chisom',    surname:'Anyanwu',   DOB:'2002-06-29', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Ibeju-Lekki', ward:'Ward 15',education:EducationLevel.TERTIARY,  residentialAddress:'42 Lekki-Epe Expressway, Lagos' },
-    { firstName:'Ahmed',     surname:'Suleiman',  DOB:'2003-02-11', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Abuja',    LGA:'Gwagwalada',  ward:'Ward 7', education:EducationLevel.TERTIARY,  residentialAddress:'16 Gwagwalada Town, Abuja' },
-    { firstName:'Yewande',   surname:'Falode',    DOB:'1999-12-03', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Lagos',    LGA:'Lagos Island', ward:'Ward 16',education:EducationLevel.TERTIARY, residentialAddress:'3 Victoria Island, Lagos' },
-    { firstName:'Chibuzor',  surname:'Nweze',     DOB:'2001-10-17', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Rivers',   LGA:'Obio-Akpor',  ward:'Ward 17',education:EducationLevel.TERTIARY,  residentialAddress:'77 Rumuche Road, Port Harcourt' },
-    // ── Age 36-55 urban (18) ──
-    { firstName:'Bimbo',     surname:'Olatunji',  DOB:'1985-04-11', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Eti-Osa',     ward:'Ward 18',education:EducationLevel.TERTIARY,  residentialAddress:'5 Victoria Garden City, Lekki, Lagos' },
-    { firstName:'Nnamdi',    surname:'Chukwueke', DOB:'1979-09-25', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Ikeja',       ward:'Ward 19',education:EducationLevel.TERTIARY,  residentialAddress:'88 Obafemi Awolowo Road, Ikeja' },
-    { firstName:'Kemi',      surname:'Adewale',   DOB:'1988-07-06', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Abuja',    LGA:'Municipal',   ward:'Ward 20',education:EducationLevel.TERTIARY,  residentialAddress:'15 Wuse Zone 3, Abuja' },
-    { firstName:'Ifeanyi',   surname:'Obiora',    DOB:'1982-03-18', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 21',education:EducationLevel.TERTIARY, residentialAddress:'24 Rumuola Road, Port Harcourt' },
-    { firstName:'Lola',      surname:'Badmus',    DOB:'1991-11-28', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Isale-Eko',   ward:'Ward 22',education:EducationLevel.TERTIARY,  residentialAddress:'11 Idumota, Lagos Island, Lagos' },
-    { firstName:'Seun',      surname:'Olatunde',  DOB:'1977-06-09', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Amuwo-Odofin',ward:'Ward 23',education:EducationLevel.TERTIARY,  residentialAddress:'67 Trade Fair Complex Road, Lagos' },
-    { firstName:'Chinwe',    surname:'Uche',      DOB:'1984-02-14', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Surulere',    ward:'Ward 24',education:EducationLevel.TERTIARY,  residentialAddress:'30 Bode Thomas Street, Surulere' },
-    { firstName:'Dare',      surname:'Ogunseye',  DOB:'1989-08-03', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Abuja',    LGA:'Abaji',       ward:'Ward 25',education:EducationLevel.TERTIARY,  residentialAddress:'5 Abaji Council Secretariat Road, Abuja' },
-    { firstName:'Nneka',     surname:'Onyekachi', DOB:'1980-05-22', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Rivers',   LGA:'Obio-Akpor',  ward:'Ward 26',education:EducationLevel.TERTIARY,  residentialAddress:'12 Rumuigbo Road, Port Harcourt' },
-    { firstName:'Rasheed',   surname:'Olawale',   DOB:'1986-12-17', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Kosofe',      ward:'Ward 27',education:EducationLevel.TERTIARY,  residentialAddress:'19 Alapere Estate, Kosofe, Lagos' },
-    { firstName:'Josephine', surname:'Ezeobiora', DOB:'1990-04-30', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Oshodi-Isolo',ward:'Ward 28',education:EducationLevel.TERTIARY,  residentialAddress:'23 Ejigbo Road, Lagos' },
-    { firstName:'Sunday',    surname:'Akinwale',  DOB:'1978-10-05', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Alimosho',    ward:'Ward 29',education:EducationLevel.TERTIARY,  residentialAddress:'8 Ikotun Road, Lagos' },
-    { firstName:'Ngozi',     surname:'Obi',       DOB:'1985-01-19', sex:Sex.FEMALE, maritalStatus:MaritalStatus.DIVORCED,state:'Abuja',    LGA:'Municipal',   ward:'Ward 30',education:EducationLevel.TERTIARY,  residentialAddress:'4 Area 3, Garki, Abuja' },
-    { firstName:'Victor',    surname:'Ndubuisi',  DOB:'1991-07-08', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 31',education:EducationLevel.TERTIARY, residentialAddress:'31 Nkpolu Road, Port Harcourt' },
-    { firstName:'Hauwa',     surname:'Bello',     DOB:'1987-09-14', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Abuja',    LGA:'Gwagwalada',  ward:'Ward 32',education:EducationLevel.TERTIARY,  residentialAddress:'22 Phase 4, Gwagwalada, Abuja' },
-    { firstName:'Babajide',  surname:'Alabi',     DOB:'1983-03-27', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Ikeja',       ward:'Ward 33',education:EducationLevel.TERTIARY,  residentialAddress:'6 CMD Road, Ikeja, Lagos' },
-    { firstName:'Ada',       surname:'Nwachukwu', DOB:'1979-11-12', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 34',education:EducationLevel.TERTIARY, residentialAddress:'55 Peter Odili Road, Port Harcourt' },
-    { firstName:'Chinyere',  surname:'Okonkwo',   DOB:'1986-06-20', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Abuja',    LGA:'Municipal',   ward:'Ward 34b',education:EducationLevel.TERTIARY,  residentialAddress:'11 Asokoro District, Abuja' },
-    // ── Age 56+ urban (9) ──
-    { firstName:'Chief Remi',surname:'Adeleke',   DOB:'1958-06-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Eti-Osa',     ward:'Ward 35',education:EducationLevel.TERTIARY,  residentialAddress:'1 Bourdillon Road, Ikoyi, Lagos' },
-    { firstName:'Mrs Ngozi', surname:'Okoye',     DOB:'1963-02-28', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Lagos Island', ward:'Ward 36',education:EducationLevel.TERTIARY, residentialAddress:'12 Commercial Avenue, Lagos Island' },
-    { firstName:'Alhaji Bala',surname:'Muhammed', DOB:'1955-10-01', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Abuja',    LGA:'Municipal',   ward:'Ward 37',education:EducationLevel.SECONDARY,  residentialAddress:'3 Maitama District, Abuja' },
-    { firstName:'Pa Joseph',  surname:'Odeyemi',  DOB:'1960-12-25', sex:Sex.MALE,   maritalStatus:MaritalStatus.WIDOWED, state:'Lagos',    LGA:'Surulere',    ward:'Ward 38',education:EducationLevel.PRIMARY,     residentialAddress:'7 Itire Road, Surulere, Lagos' },
-    { firstName:'Mama Grace', surname:'Afolabi',  DOB:'1957-04-18', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Lagos',    LGA:'Agege',       ward:'Ward 39',education:EducationLevel.PRIMARY,     residentialAddress:'14 Agege Town Centre, Lagos' },
-    { firstName:'Elder Ben',  surname:'Ekwueme',  DOB:'1961-08-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Rivers',   LGA:'Port Harcourt',ward:'Ward 40',education:EducationLevel.SECONDARY,  residentialAddress:'29 Forces Avenue, Port Harcourt' },
-    { firstName:'Mama Titi',  surname:'Fasanya',  DOB:'1964-03-09', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Lagos',    LGA:'Mushin',      ward:'Ward 41',education:EducationLevel.PRIMARY,     residentialAddress:'5 Mushin Town Centre, Lagos' },
-    { firstName:'Pa Ike',     surname:'Aneke',    DOB:'1953-11-20', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Abuja',    LGA:'Kuje',        ward:'Ward 42',education:EducationLevel.PRIMARY,     residentialAddress:'11 Kuje Old Town, Abuja' },
-    { firstName:'Madam Comfort',surname:'Okonkwo',DOB:'1959-07-30', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Rivers',   LGA:'Obio-Akpor',  ward:'Ward 43',education:EducationLevel.SECONDARY,  residentialAddress:'8 Eliozu Road, Port Harcourt' },
+    // -- Age 18-35 urban (24) --
+    { firstName:'Tolu',       surname:'Adeyemi',    DOB:'2002-03-14', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'12 Alagbaka Estate, Akure South' },
+    { firstName:'Segun',      surname:'Ogunleye',   DOB:'2001-07-22', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'5 Oba Adesida Road, Akure South' },
+    { firstName:'Sade',       surname:'Akindele',   DOB:'2003-11-03', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'22 Fanibi Road, Akure South' },
+    { firstName:'Chidi',      surname:'Adesanya',   DOB:'2000-05-18', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 4', education:EducationLevel.TERTIARY,  residentialAddress:'7 Oyemekun Road, Akure South' },
+    { firstName:'Bisi',       surname:'Omotosho',   DOB:'2004-01-30', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 5', education:EducationLevel.TERTIARY,  residentialAddress:'34 Shagari Village, Akure South' },
+    { firstName:'Wale',       surname:'Akinyele',   DOB:'1999-08-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'18 Isikan, Akure South, Ondo' },
+    { firstName:'Funke',      surname:'Adegoke',    DOB:'2002-04-27', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'9 Ijapo Estate, Akure South' },
+    { firstName:'Dele',       surname:'Akintola',   DOB:'2001-12-09', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'15 GRA Road, Akure South, Ondo' },
+    { firstName:'Yemi',       surname:'Aromolaran', DOB:'2003-06-21', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure North', ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'4 Owena-Ondo Road, Akure North' },
+    { firstName:'Kunle',      surname:'Adewale',    DOB:'2000-10-05', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure North', ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'11 Oba-Ile Community, Akure North' },
+    { firstName:'Nike',       surname:'Akinrinade', DOB:'2004-02-18', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure North', ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'6 Igoba Road, Akure North' },
+    { firstName:'Gbenga',     surname:'Olusegun',   DOB:'2002-08-31', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'3 Ondo Town Centre, Ondo West' },
+    { firstName:'Bola',       surname:'Olusanya',   DOB:'2001-01-14', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'20 Oba Adesimbo Square, Ondo West' },
+    { firstName:'Femi',       surname:'Akinyemi',   DOB:'2003-09-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'8 Yaba Road, Ondo West, Ondo' },
+    { firstName:'Shade',      surname:'Adesina',    DOB:'1999-05-22', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 4', education:EducationLevel.SECONDARY, residentialAddress:'14 Idanre Road, Ondo West' },
+    { firstName:'Seun',       surname:'Akindolu',   DOB:'2004-03-11', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Owo',         ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'5 Oba Market Road, Owo, Ondo' },
+    { firstName:'Toyin',      surname:'Olubunmi',   DOB:'2002-11-25', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Owo',         ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'12 Ijebu-Owo Road, Owo, Ondo' },
+    { firstName:'Remi',       surname:'Adekunle',   DOB:'2001-07-08', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Owo',         ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'7 Emure Road, Owo, Ondo' },
+    { firstName:'Mope',       surname:'Adeyinka',   DOB:'2003-04-16', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 4', education:EducationLevel.TERTIARY,  residentialAddress:'25 Obasanjo Way, Akure South' },
+    { firstName:'Biodun',     surname:'Osuntoki',   DOB:'2000-12-03', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure South', ward:'Ward 5', education:EducationLevel.TERTIARY,  residentialAddress:'3 Shagari Village, Akure South' },
+    { firstName:'Lola',       surname:'Akinrinola', DOB:'2004-08-20', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Akure North', ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'2 Odo-Owa, Akure North, Ondo' },
+    { firstName:'Akin',       surname:'Ogundele',   DOB:'2002-02-14', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'16 Lisabi Street, Ondo West' },
+    { firstName:'Bisi',       surname:'Akintunde',  DOB:'2001-10-29', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'9 Arigidi Street, Ondo West' },
+    { firstName:'Dapo',       surname:'Omosuyi',    DOB:'1999-06-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo West',   ward:'Ward 4', education:EducationLevel.SECONDARY, residentialAddress:'1 Akindele Close, Ondo West' },
+    // -- Age 36-55 urban (18) --
+    { firstName:'Kemi',       surname:'Afolabi',    DOB:'1984-05-12', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'10 Alagbaka GRA, Akure South' },
+    { firstName:'Sunday',     surname:'Adeleke',    DOB:'1979-09-28', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'6 Oba Adesida Road, Akure South' },
+    { firstName:'Iyabo',      surname:'Adebayo',    DOB:'1988-01-17', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'21 Fanibi Road, Akure South' },
+    { firstName:'Rotimi',     surname:'Adetayo',    DOB:'1985-07-04', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 4', education:EducationLevel.TERTIARY,  residentialAddress:'8 Oyemekun GRA, Akure South' },
+    { firstName:'Abosede',    surname:'Faleye',     DOB:'1990-03-22', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 5', education:EducationLevel.TERTIARY,  residentialAddress:'32 Shagari Estate, Akure South' },
+    { firstName:'Gbenga',     surname:'Oladipo',    DOB:'1982-11-09', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'17 Isikan, Akure South, Ondo' },
+    { firstName:'Bosede',     surname:'Akinlabi',   DOB:'1987-06-15', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure North', ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'5 Owena Road, Akure North' },
+    { firstName:'Bode',       surname:'Olanrewaju', DOB:'1983-02-27', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure North', ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'14 Oba-Ile Road, Akure North' },
+    { firstName:'Omowunmi',   surname:'Adeyemi',    DOB:'1986-10-14', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure North', ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'3 Igoba Community, Akure North' },
+    { firstName:'Tunde',      surname:'Agbaje',     DOB:'1979-04-01', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',   ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'2 Ondo Town Hall Road, Ondo West' },
+    { firstName:'Atinuke',    surname:'Odeyemi',    DOB:'1984-12-19', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',   ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'19 Oba Adesimbo Street, Ondo West' },
+    { firstName:'Kayode',     surname:'Akintoye',   DOB:'1988-08-06', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',   ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'7 Yaba Junction, Ondo West' },
+    { firstName:'Ronke',      surname:'Fasanya',    DOB:'1985-05-24', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',   ward:'Ward 4', education:EducationLevel.SECONDARY, residentialAddress:'11 Idanre Road, Ondo West' },
+    { firstName:'Rasaq',      surname:'Ogunlade',   DOB:'1979-01-11', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Owo',         ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'4 Oba Market Area, Owo, Ondo' },
+    { firstName:'Titilayo',   surname:'Ajayi',      DOB:'1987-09-29', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Owo',         ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'13 Ijebu-Owo Road, Owo, Ondo' },
+    { firstName:'Emmanuel',   surname:'Aduloju',    DOB:'1982-07-17', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Owo',         ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'8 Cathedral Road, Owo, Ondo' },
+    { firstName:'Bukky',      surname:'Salami',     DOB:'1990-03-04', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Owo',         ward:'Ward 4', education:EducationLevel.TERTIARY,  residentialAddress:'20 Emure Road, Owo, Ondo' },
+    // -- Age 56+ urban (9) --
+    { firstName:'Chief Bayo',  surname:'Adegunwa',  DOB:'1958-06-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'1 Alagbaka GRA, Akure South' },
+    { firstName:'Mrs Folake',  surname:'Ogunniyi',  DOB:'1963-02-28', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 2', education:EducationLevel.TERTIARY,  residentialAddress:'12 Oba Adesida Road, Akure South' },
+    { firstName:'Pa Segun',    surname:'Olatunde',  DOB:'1955-10-01', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure South', ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'3 Old Government Estate, Akure South' },
+    { firstName:'Mama Nike',   surname:'Adeleke',   DOB:'1960-12-25', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Akure South', ward:'Ward 4', education:EducationLevel.PRIMARY,   residentialAddress:'7 Itire Road, Akure South' },
+    { firstName:'Elder Remi',  surname:'Akintunde', DOB:'1961-08-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure North', ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'29 Oba-Ile Road, Akure North' },
+    { firstName:'Mama Sola',   surname:'Adeyemi',   DOB:'1964-03-09', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Akure North', ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'5 Owena Community, Akure North' },
+    { firstName:'Pa Femi',     surname:'Oduyemi',   DOB:'1957-11-20', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure North', ward:'Ward 3', education:EducationLevel.PRIMARY,   residentialAddress:'11 Igoba Old Town, Akure North' },
+    { firstName:'Chief Bisi',  surname:'Olatunji',  DOB:'1959-07-30', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',   ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'1 Ondo Palace Road, Ondo West' },
+    { firstName:'Mama Titi',   surname:'Adewale',   DOB:'1962-04-18', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Ondo West',   ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'8 Ondo Old Market, Ondo West' },
   ];
 
-  // ── Rural voters (36) ─────────────────────────────────────────────────
-  //   Age 18-35 (rural): 10    Age 36-55 (rural): 13   Age 56+ (rural): 13
+  // -- Rural voters (35) -- Ondo State rural LGAs ---------------------------
+  //   Age 18-35 (rural): 10    Age 36-55 (rural): 13   Age 56+ (rural): 12
   const ruralVoters: VoterDef[] = [
-    // ── Age 18-35 rural (10) ──
-    { firstName:'Tunde',    surname:'Olusola',   DOB:'2001-02-17', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Odigbo',            ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'4 Alagbaka Village, Odigbo, Ondo' },
-    { firstName:'Bunmi',    surname:'Ogundele',  DOB:'2003-06-11', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ese Odo',           ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'7 Igbekebo Road, Ese Odo, Ondo' },
-    { firstName:'Kayode',   surname:'Adeniyi',   DOB:'2000-10-29', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ifedore',           ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'12 Igbara-Oke Road, Ifedore, Ondo' },
-    { firstName:'Bisola',   surname:'Ogunyemi',  DOB:'2002-04-05', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo East',         ward:'Ward 4', education:EducationLevel.SECONDARY, residentialAddress:'3 Oke-Eda, Ondo East LGA' },
-    { firstName:'Femi',     surname:'Adeyeye',   DOB:'1999-08-22', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 5', education:EducationLevel.SECONDARY, residentialAddress:'9 Ile Oluji Main Road, Ondo' },
-    { firstName:'Sola',     surname:'Omodele',   DOB:'2003-12-01', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Odigbo',            ward:'Ward 6', education:EducationLevel.SECONDARY, residentialAddress:'2 Iju-Odo Community, Odigbo' },
-    { firstName:'Wale',     surname:'Fadahunsi',  DOB:'2001-03-18', sex:Sex.MALE,  maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Idanre',            ward:'Ward 7', education:EducationLevel.SECONDARY, residentialAddress:'6 Idanre Hills Road, Ondo' },
-    { firstName:'Yemi',     surname:'Ojo',       DOB:'2004-07-25', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Irele',             ward:'Ward 8', education:EducationLevel.SECONDARY, residentialAddress:'15 Ode-Irele Road, Irele, Ondo' },
-    { firstName:'Biodun',   surname:'Ilesanmi',  DOB:'2000-01-14', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ogun Waterside',    ward:'Ward 9', education:EducationLevel.PRIMARY,   residentialAddress:'4 Aiyetoro Waterside, Ondo' },
-    { firstName:'Tosin',    surname:'Adebayo',   DOB:'2002-09-08', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ese Odo',           ward:'Ward 10',education:EducationLevel.SECONDARY, residentialAddress:'1 Igbobini Road, Ese Odo, Ondo' },
-    // ── Age 36-55 rural (13) ──
-    { firstName:'Rotimi',   surname:'Ajayi',     DOB:'1984-05-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',         ward:'Ward 11',education:EducationLevel.SECONDARY, residentialAddress:'18 Ondo Town Centre, Ondo West' },
-    { firstName:'Kike',     surname:'Adetokunbo',DOB:'1979-11-24', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akure North',       ward:'Ward 12',education:EducationLevel.SECONDARY, residentialAddress:'3 Owena-Ondo Road, Akure North' },
-    { firstName:'Dayo',     surname:'Ariyo',     DOB:'1988-03-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akoko North-East',  ward:'Ward 13',education:EducationLevel.TERTIARY,  residentialAddress:'7 Ikare-Akoko Main Street, Ondo' },
-    { firstName:'Sikirat',  surname:'Afolabi',   DOB:'1981-07-02', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akoko South-West',  ward:'Ward 14',education:EducationLevel.SECONDARY, residentialAddress:'12 Oka-Akoko, Akoko South-West' },
-    { firstName:'Gbemiga',  surname:'Adegbite',  DOB:'1990-09-30', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Idanre',            ward:'Ward 15',education:EducationLevel.SECONDARY, residentialAddress:'5 Idanre Town Road, Ondo' },
-    { firstName:'Folake',   surname:'Akinbode',  DOB:'1976-12-22', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Odigbo',            ward:'Ward 16',education:EducationLevel.SECONDARY, residentialAddress:'9 Ore Main Street, Odigbo, Ondo' },
-    { firstName:'Kunmi',    surname:'Adekunle',  DOB:'1985-04-08', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ose',               ward:'Ward 17',education:EducationLevel.SECONDARY, residentialAddress:'6 Ifon Road, Ose LGA, Ondo' },
-    { firstName:'Bisi',     surname:'Oloyede',   DOB:'1980-08-17', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Irele',             ward:'Ward 18',education:EducationLevel.SECONDARY, residentialAddress:'14 Irele Town Centre, Ondo' },
-    { firstName:'Dotun',    surname:'Fakoya',    DOB:'1987-02-10', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ifedore',           ward:'Ward 19',education:EducationLevel.TERTIARY,  residentialAddress:'3 Igbara-Oke, Ifedore, Ondo' },
-    { firstName:'Omolara',  surname:'Ijaware',   DOB:'1983-06-05', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo East',         ward:'Ward 20',education:EducationLevel.SECONDARY, residentialAddress:'8 Ode-Ondo Road, Ondo East' },
-    { firstName:'Adewole',  surname:'Adeagbo',   DOB:'1991-10-19', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 21',education:EducationLevel.SECONDARY, residentialAddress:'20 Okeigbo Road, Ile Oluji' },
-    { firstName:'Taiwo',    surname:'Ogunleye',  DOB:'1978-01-28', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ogun Waterside',    ward:'Ward 22',education:EducationLevel.PRIMARY,   residentialAddress:'2 Odogbolu Junction, Ogun Waterside' },
-    { firstName:'Akeem',    surname:'Jimoh',     DOB:'1989-05-14', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ese Odo',           ward:'Ward 23',education:EducationLevel.SECONDARY, residentialAddress:'11 Arogbo Road, Ese Odo, Ondo' },
-    // ── Age 56+ rural (13) ──
-    { firstName:'Baba Rotimi',  surname:'Adeyemi',  DOB:'1962-03-04', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',         ward:'Ward 24',education:EducationLevel.PRIMARY,   residentialAddress:'4 Oba\'s Palace Road, Ondo Town' },
-    { firstName:'Mama Yinka',   surname:'Oladele',  DOB:'1958-08-16', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Akure North',       ward:'Ward 25',education:EducationLevel.PRIMARY,   residentialAddress:'7 Oba-Ile Village, Akure North' },
-    { firstName:'Pa Oluwole',   surname:'Ajisafe',  DOB:'1955-12-29', sex:Sex.MALE,   maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Akoko North-East',  ward:'Ward 26',education:EducationLevel.PRIMARY,   residentialAddress:'3 Ikare-Akoko Old Town, Ondo' },
-    { firstName:'Iya Abeo',     surname:'Owolabi',  DOB:'1963-06-22', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akoko South-West',  ward:'Ward 27',education:EducationLevel.PRIMARY,   residentialAddress:'1 Oka-Akoko Market Road, Ondo' },
-    { firstName:'Chief Ayo',    surname:'Olusanya', DOB:'1960-10-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Idanre',            ward:'Ward 28',education:EducationLevel.SECONDARY, residentialAddress:'9 Owena Road, Idanre, Ondo' },
-    { firstName:'Mama Bose',    surname:'Adeogun',  DOB:'1957-02-07', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Odigbo',            ward:'Ward 29',education:EducationLevel.PRIMARY,   residentialAddress:'6 Ore Waterside, Odigbo, Ondo' },
-    { firstName:'Baba Sule',    surname:'Adeyemo',  DOB:'1964-07-19', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ose',               ward:'Ward 30',education:EducationLevel.PRIMARY,   residentialAddress:'2 Ifon Town Centre, Ose LGA' },
-    { firstName:'Alhaja Saadat',surname:'Badmus',   DOB:'1959-11-10', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Irele',             ward:'Ward 31',education:EducationLevel.PRIMARY,   residentialAddress:'8 Irele Market Road, Ondo' },
-    { firstName:'Pa Daniel',    surname:'Ige',      DOB:'1952-04-25', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ifedore',           ward:'Ward 32',education:EducationLevel.PRIMARY,   residentialAddress:'5 Ijare Village, Ifedore, Ondo' },
-    { firstName:'Mama Sola',    surname:'Akinlade', DOB:'1961-09-02', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Ondo East',         ward:'Ward 33',education:EducationLevel.PRIMARY,   residentialAddress:'1 Ode-Ondo Village, Ondo East' },
-    { firstName:'Agba Lukman',  surname:'Afolabi',  DOB:'1956-01-18', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 34',education:EducationLevel.PRIMARY,   residentialAddress:'13 Ile Oluji Old Town' },
-    { firstName:'Mama Patience',surname:'Omoruyi',  DOB:'1965-05-31', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ogun Waterside',    ward:'Ward 35',education:EducationLevel.PRIMARY,   residentialAddress:'2 Aiyetoro Community, Ogun Waterside' },
+    // -- Age 18-35 rural (10) --
+    { firstName:'Tunde',      surname:'Olusola',    DOB:'2001-02-17', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Odigbo',            ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'4 Alagbaka Village, Odigbo, Ondo' },
+    { firstName:'Bunmi',      surname:'Ogundele',   DOB:'2003-06-11', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Odigbo',            ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'7 Ore Main Road, Odigbo, Ondo' },
+    { firstName:'Kayode',     surname:'Adeniyi',    DOB:'2000-10-29', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Odigbo',            ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'12 Iju-Odo Community, Odigbo' },
+    { firstName:'Bisola',     surname:'Ogunyemi',   DOB:'2002-04-05', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ese Odo',           ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'3 Igbobini Road, Ese Odo, Ondo' },
+    { firstName:'Femi',       surname:'Adeyeye',    DOB:'1999-08-22', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ese Odo',           ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'9 Arogbo Road, Ese Odo, Ondo' },
+    { firstName:'Sola',       surname:'Omodele',    DOB:'2003-12-01', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'2 Ile Oluji Main Road, Ondo' },
+    { firstName:'Wale',       surname:'Fadahunsi',  DOB:'2001-03-18', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'6 Okeigbo Road, Ile Oluji' },
+    { firstName:'Yemi',       surname:'Ojo',        DOB:'2004-07-25', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ifedore',           ward:'Ward 1', education:EducationLevel.PRIMARY,   residentialAddress:'15 Igbara-Oke Road, Ifedore' },
+    { firstName:'Biodun',     surname:'Ilesanmi',   DOB:'2000-01-14', sex:Sex.MALE,   maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ifedore',           ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'4 Ipinsa Road, Ifedore, Ondo' },
+    { firstName:'Tosin',      surname:'Adebayo',    DOB:'2002-09-08', sex:Sex.FEMALE, maritalStatus:MaritalStatus.SINGLE,  state:'Ondo', LGA:'Ondo East',         ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'1 Ode-Ondo Road, Ondo East' },
+    // -- Age 36-55 rural (13) --
+    { firstName:'Rotimi',     surname:'Ajayi',      DOB:'1984-05-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Odigbo',            ward:'Ward 4', education:EducationLevel.SECONDARY, residentialAddress:'18 Ore Town Centre, Odigbo' },
+    { firstName:'Kike',       surname:'Adetokunbo', DOB:'1979-11-24', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Odigbo',            ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'3 Owena-Ondo Road, Odigbo' },
+    { firstName:'Dayo',       surname:'Ariyo',      DOB:'1988-03-15', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ese Odo',           ward:'Ward 3', education:EducationLevel.TERTIARY,  residentialAddress:'7 Arogbo Waterfront, Ese Odo' },
+    { firstName:'Sikirat',    surname:'Afolabi',    DOB:'1981-07-02', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ese Odo',           ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'12 Igbobini Road, Ese Odo' },
+    { firstName:'Gbemiga',    surname:'Adegbite',   DOB:'1990-09-30', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'5 Okeigbo Town Road, Ile Oluji' },
+    { firstName:'Folake',     surname:'Akinbode',   DOB:'1976-12-22', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'9 Ile Oluji Old Town, Ondo' },
+    { firstName:'Kunmi',      surname:'Adekunle',   DOB:'1985-04-08', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Idanre',            ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'6 Idanre Hills Road, Ondo' },
+    { firstName:'Bisi',       surname:'Oloyede',    DOB:'1980-08-17', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Idanre',            ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'14 Idanre Town Centre, Ondo' },
+    { firstName:'Dotun',      surname:'Fakoya',     DOB:'1987-02-10', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Irele',             ward:'Ward 1', education:EducationLevel.TERTIARY,  residentialAddress:'3 Ode-Irele Road, Irele, Ondo' },
+    { firstName:'Omolara',    surname:'Ijaware',    DOB:'1983-06-05', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Irele',             ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'8 Irele Town Centre, Ondo' },
+    { firstName:'Adewole',    surname:'Adeagbo',    DOB:'1991-10-19', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ogun Waterside',    ward:'Ward 1', education:EducationLevel.SECONDARY, residentialAddress:'20 Aiyetoro Road, Ogun Waterside' },
+    { firstName:'Taiwo',      surname:'Ogunleye',   DOB:'1978-01-28', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ose',               ward:'Ward 1', education:EducationLevel.PRIMARY,   residentialAddress:'2 Ifon Road, Ose LGA, Ondo' },
+    { firstName:'Akeem',      surname:'Jimoh',      DOB:'1989-05-14', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ose',               ward:'Ward 2', education:EducationLevel.SECONDARY, residentialAddress:'11 Okeagbe Road, Ose LGA, Ondo' },
+    // -- Age 56+ rural (12) --
+    { firstName:'Baba Rotimi',   surname:'Adeyemi',   DOB:'1962-03-04', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo West',         ward:'Ward 3', education:EducationLevel.PRIMARY,   residentialAddress:'4 Ondo Palace Road, Ondo West' },
+    { firstName:'Mama Yinka',    surname:'Oladele',   DOB:'1958-08-16', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Ondo West',         ward:'Ward 4', education:EducationLevel.PRIMARY,   residentialAddress:'7 Yaba Road, Ondo West, Ondo' },
+    { firstName:'Pa Kayode',     surname:'Afolabi',   DOB:'1955-10-01', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Odigbo',            ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'6 Ore Old Road, Odigbo, Ondo' },
+    { firstName:'Mama Bisi',     surname:'Falade',    DOB:'1960-12-25', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Odigbo',            ward:'Ward 3', education:EducationLevel.PRIMARY,   residentialAddress:'14 Iju-Odo, Odigbo, Ondo' },
+    { firstName:'Chief Dele',    surname:'Akintunde', DOB:'1959-07-30', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Idanre',            ward:'Ward 3', education:EducationLevel.SECONDARY, residentialAddress:'8 Idanre Hills, Idanre, Ondo' },
+    { firstName:'Mama Titi',     surname:'Adeyeye',   DOB:'1964-03-09', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Irele',             ward:'Ward 3', education:EducationLevel.PRIMARY,   residentialAddress:'5 Ode-Irele Village, Irele' },
+    { firstName:'Elder Seun',    surname:'Olawale',   DOB:'1957-11-20', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ile Oluji/Okeigbo', ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'11 Okeigbo Old Town, Ile Oluji' },
+    { firstName:'Mama Comfort',  surname:'Omosuyi',   DOB:'1959-07-30', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Ese Odo',           ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'2 Igbobini Waterfront, Ese Odo' },
+    { firstName:'Pa Daniel',     surname:'Ige',       DOB:'1961-08-07', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Ondo East',         ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'4 Ode-Ondo Old Market, Ondo East' },
+    { firstName:'Mama Sola',     surname:'Akinlade',  DOB:'1961-09-02', sex:Sex.FEMALE, maritalStatus:MaritalStatus.WIDOWED, state:'Ondo', LGA:'Ondo East',         ward:'Ward 3', education:EducationLevel.PRIMARY,   residentialAddress:'1 Ondo East Village, Ondo East' },
+    { firstName:'Agba Lukman',   surname:'Afolabi',   DOB:'1956-01-18', sex:Sex.MALE,   maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akoko North-East',  ward:'Ward 1', education:EducationLevel.PRIMARY,   residentialAddress:'13 Ikare-Akoko Road, Akoko NE' },
+    { firstName:'Mama Patience', surname:'Omoruyi',   DOB:'1965-05-31', sex:Sex.FEMALE, maritalStatus:MaritalStatus.MARRIED, state:'Ondo', LGA:'Akoko North-East',  ward:'Ward 2', education:EducationLevel.PRIMARY,   residentialAddress:'2 Ikare Old Town, Akoko North-East' },
   ];
 
   const allVoterDefs = [...urbanVoters, ...ruralVoters]; // 51 + 35 = 86
