@@ -94,3 +94,16 @@ mobile/.env.*.local
 *.crt
 *.der
 *.key
+
+# Face Services zip files
+services/face-services/**/*.zip
+services/face-services/.insightface/
+
+# Chapters and document generation
+Chapter_*.md
+Chapter_*.docx
+convert_to_docx.py
+~$*
+figures/
+
+

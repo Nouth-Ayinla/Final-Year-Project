@@ -18,6 +18,7 @@ export const RegisterVoter = async (req: Request, res: Response) => {
     maritalStatus,
     state,
     LGA,
+    ward,
     education,
     residentialAddress,
   } = req.body;
@@ -36,6 +37,7 @@ export const RegisterVoter = async (req: Request, res: Response) => {
       !maritalStatus ||
       !state ||
       !LGA ||
+      !ward ||
       !education ||
       !residentialAddress
     ) {
@@ -76,32 +78,13 @@ export const RegisterVoter = async (req: Request, res: Response) => {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                     Generate Credentials & Create Voter                    */
+    /*                     Generate Credentials                                   */
     /* -------------------------------------------------------------------------- */
 
     const generatedVoterId = GenerateVoterId();
     const generatedActivationPin = Generatepin();
 
     const hashedPin = await bcrypt.hash(generatedActivationPin, 10);
-
-    const newVoter = await prisma.voter.create({
-      data: {
-        firstName,
-        surname,
-        otherName,
-        email,
-        DOB,
-        sex,
-        maritalStatus,
-        state,
-        LGA,
-        education,
-        residentialAddress,
-        profilePicture,
-        voterId: generatedVoterId,
-        activationPin: hashedPin,
-      },
-    });
 
     /* -------------------------------------------------------------------------- */
     /*                           Face Enrollment                                  */
@@ -136,6 +119,30 @@ export const RegisterVoter = async (req: Request, res: Response) => {
         message: "Voter registration failed: face enrollment error",
       });
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                     Create Voter in Database                               */
+    /* -------------------------------------------------------------------------- */
+
+    const newVoter = await prisma.voter.create({
+      data: {
+        firstName,
+        surname,
+        otherName,
+        email,
+        DOB,
+        sex,
+        maritalStatus,
+        state,
+        LGA,
+        ward,
+        education,
+        residentialAddress,
+        profilePicture,
+        voterId: generatedVoterId,
+        activationPin: hashedPin,
+      },
+    });
 
     /* -------------------------------------------------------------------------- */
     /*                              Send Email                                    */

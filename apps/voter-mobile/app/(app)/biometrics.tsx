@@ -18,6 +18,7 @@ import { useBiometric } from '@/hooks/useBiometric';
 import { useAuthStore } from '@/store/useAuthStore';
 import { electionService } from '@/services/electionService';
 import { BackArrow } from '@/components';
+import * as SecureStore from 'expo-secure-store';
 
 type ActiveMode = 'menu' | 'fingerprint' | 'face';
 type FaceStage = 'camera' | 'verifying' | 'success';
@@ -49,6 +50,20 @@ export default function BiometricsTabScreen() {
   const [faceStage, setFaceStage] = useState<FaceStage>('camera');
   const scanLineAnim = useRef(new Animated.Value(0)).current;
   const facePulseAnim = useRef(new Animated.Value(1)).current;
+
+  const [faceSuccess, setFaceSuccess] = useState(false);
+
+  useEffect(() => {
+    const checkFaceStatus = async () => {
+      if (voter?.voterId) {
+        const enrolled = await SecureStore.getItemAsync(`face_enrolled_${voter.voterId}`);
+        if (enrolled === 'true') {
+          setFaceSuccess(true);
+        }
+      }
+    };
+    checkFaceStatus();
+  }, [voter]);
 
   // Setup Fingerprint Animations on start
   useEffect(() => {
@@ -203,6 +218,10 @@ export default function BiometricsTabScreen() {
 
       if (result.matched) {
         setFaceStage('success');
+        setFaceSuccess(true);
+        if (voterId) {
+          await SecureStore.setItemAsync(`face_enrolled_${voterId}`, 'true');
+        }
         setTimeout(() => {
           Alert.alert(
             'Facial ID Enrolled',
@@ -270,8 +289,15 @@ export default function BiometricsTabScreen() {
               onPress={() => setActiveMode('fingerprint')}
               activeOpacity={0.8}
             >
-              <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(242, 100, 26, 0.15)' }]}>
-                <Ionicons name="finger-print" size={32} color="#f2641a" />
+              <View style={[
+                styles.menuIconCircle, 
+                { backgroundColor: isEnrolled ? 'rgba(161, 212, 148, 0.15)' : 'rgba(242, 100, 26, 0.15)' }
+              ]}>
+                {isEnrolled ? (
+                  <Ionicons name="checkmark-circle" size={32} color="#a1d494" />
+                ) : (
+                  <Ionicons name="finger-print" size={32} color="#f2641a" />
+                )}
               </View>
               <View style={styles.menuTextSection}>
                 <Text style={styles.menuCardTitle}>Register Fingerprint</Text>
@@ -279,7 +305,11 @@ export default function BiometricsTabScreen() {
                   Link hardware fingerprint credentials to authenticate your ballot casts instantly.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#e1bfb2" />
+              {isEnrolled ? (
+                <Ionicons name="checkmark-circle" size={20} color="#a1d494" />
+              ) : (
+                <Ionicons name="chevron-forward" size={20} color="#e1bfb2" />
+              )}
             </TouchableOpacity>
 
             {/* Face scan panel option */}
@@ -296,8 +326,15 @@ export default function BiometricsTabScreen() {
               }}
               activeOpacity={0.8}
             >
-              <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(123, 175, 212, 0.15)' }]}>
-                <Ionicons name="scan" size={32} color="#7bafd4" />
+              <View style={[
+                styles.menuIconCircle, 
+                { backgroundColor: faceSuccess ? 'rgba(161, 212, 148, 0.15)' : 'rgba(123, 175, 212, 0.15)' }
+              ]}>
+                {faceSuccess ? (
+                  <Ionicons name="checkmark-circle" size={32} color="#a1d494" />
+                ) : (
+                  <Ionicons name="scan" size={32} color="#7bafd4" />
+                )}
               </View>
               <View style={styles.menuTextSection}>
                 <Text style={styles.menuCardTitle}>Register Facial ID</Text>
@@ -305,7 +342,11 @@ export default function BiometricsTabScreen() {
                   Perform a 3D camera facial scan to enroll and protect your voter identity.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#e1bfb2" />
+              {faceSuccess ? (
+                <Ionicons name="checkmark-circle" size={20} color="#a1d494" />
+              ) : (
+                <Ionicons name="chevron-forward" size={20} color="#e1bfb2" />
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -348,14 +389,14 @@ export default function BiometricsTabScreen() {
               <TouchableOpacity
                 style={[
                   styles.primaryBtn,
-                  (fingerprintAuthenticating || fingerprintSuccess) && {
+                  (fingerprintAuthenticating || fingerprintSuccess || isEnrolled) && {
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     shadowOpacity: 0,
                     elevation: 0,
                   }
                 ]}
                 onPress={handleFingerprintRegister}
-                disabled={fingerprintAuthenticating || fingerprintSuccess}
+                disabled={fingerprintAuthenticating || fingerprintSuccess || isEnrolled}
               >
                 {fingerprintAuthenticating ? (
                   <ActivityIndicator color="#e1bfb2" size="small" />
@@ -363,14 +404,14 @@ export default function BiometricsTabScreen() {
                   <>
                     <Text style={[
                       styles.primaryBtnText,
-                      fingerprintSuccess && { color: 'rgba(255, 255, 255, 0.4)' }
+                      (fingerprintSuccess || isEnrolled) && { color: 'rgba(255, 255, 255, 0.4)' }
                     ]}>
-                      {fingerprintSuccess ? 'Fingerprint Verified' : 'Verify and Enroll Touch ID'}
+                      {fingerprintSuccess || isEnrolled ? 'Fingerprint Linked' : 'Verify and Enroll Touch ID'}
                     </Text>
                     <Ionicons
                       name="finger-print"
                       size={18}
-                      color={fingerprintSuccess ? 'rgba(255, 255, 255, 0.4)' : '#4e1900'}
+                      color={fingerprintSuccess || isEnrolled ? 'rgba(255, 255, 255, 0.4)' : '#4e1900'}
                     />
                   </>
                 )}

@@ -36,6 +36,7 @@ import { Loader2, Camera } from "lucide-react"; // Imported Camera icon
 
 import { RegisterOfficerSchema, RegisterVoterSchema } from "@/lib/zodSchema";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import { axiosInstance } from "@/app/lib/axios";
 
 const ONDO_LGAS = [
   "Akoko North-East",
@@ -64,11 +65,14 @@ export default function RegisterVoterForm() {
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null); // Added preview state
-  
+
   // Camera state hooks
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const [wards, setWards] = useState<any[]>([]);
+  const [isLoadingWards, setIsLoadingWards] = useState(false);
 
   const form = useForm<z.infer<typeof RegisterVoterSchema>>({
     resolver: zodResolver(RegisterVoterSchema),
@@ -82,10 +86,41 @@ export default function RegisterVoterForm() {
       maritalStatus: "" as any,
       state: "Ondo",
       LGA: "",
+      ward: "",
       education: "" as any,
       residentialAddress: "",
     },
   });
+
+  const selectedLGA = form.watch("LGA");
+
+  useEffect(() => {
+    if (!selectedLGA) {
+      setWards([]);
+      form.setValue("ward", "");
+      return;
+    }
+
+    const fetchWards = async () => {
+      setIsLoadingWards(true);
+      try {
+        const res = await axiosInstance.get(`/ward/list?lgaName=${selectedLGA}`);
+        if (res.data && res.data.success) {
+          setWards(res.data.data);
+        } else {
+          setWards([]);
+        }
+      } catch (err) {
+        console.error("Error fetching wards:", err);
+        setWards([]);
+      } finally {
+        setIsLoadingWards(false);
+      }
+    };
+
+    fetchWards();
+    form.setValue("ward", "");
+  }, [selectedLGA, form]);
 
   useEffect(() => {
     return () => {
@@ -179,6 +214,7 @@ export default function RegisterVoterForm() {
         formData.append("maritalStatus", values.maritalStatus);
         formData.append("state", values.state);
         formData.append("LGA", values.LGA);
+        formData.append("ward", values.ward);
         formData.append("education", values.education);
         formData.append("residentialAddress", values.residentialAddress);
         formData.append("profilePicture", file);
@@ -203,7 +239,7 @@ export default function RegisterVoterForm() {
       <Card className="w-full max-w-3xl border-border/60 shadow-sm rounded-xl">
         {/* HEADER */}
         <CardHeader className="space-y-2 text-center sm:text-left">
-          <CardTitle className="text-xl sm:text-2xl">Register Voter</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">Enrollment: Voter Registration</CardTitle>
           <CardDescription>
             Add a new Citizen and give them access to vote system.
           </CardDescription>
@@ -492,6 +528,43 @@ export default function RegisterVoterForm() {
                           {ONDO_LGAS.map((lga) => (
                             <SelectItem key={lga} value={lga}>
                               {lga}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="ward"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ward</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={!selectedLGA || isLoadingWards}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                isLoadingWards
+                                  ? "Loading wards..."
+                                  : !selectedLGA
+                                  ? "Select LGA first"
+                                  : "Select Ward"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {wards.map((ward: any) => (
+                            <SelectItem key={ward.id} value={ward.name}>
+                              {ward.name} ({ward.code})
                             </SelectItem>
                           ))}
                         </SelectContent>

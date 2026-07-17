@@ -93,6 +93,8 @@ export const RegisterVoterSchema = z.object({
 
   LGA: z.string().min(2, { message: "LGA is required" }),
 
+  ward: z.string().min(1, { message: "Ward is required" }),
+
   education: z.enum(["PRIMARY", "SECONDARY", "TERTIARY"]),
 
   residentialAddress: z.string().min(5, {

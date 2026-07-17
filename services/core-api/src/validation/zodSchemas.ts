@@ -16,6 +16,7 @@ export const RegisterVoterSchema = z.object({
   maritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]),
   state: z.string().min(2, { message: "State is required" }),
   LGA: z.string().min(2, { message: "LGA is required" }),
+  ward: z.string().min(1, { message: "Ward is required" }),
   education: z.enum(["PRIMARY", "SECONDARY", "TERTIARY"]),
   residentialAddress: z.string().min(5, {
     message: "Residential address is required",

@@ -67,8 +67,8 @@ const CONTACT = [
     id: 'email',
     icon: 'mail-outline' as const,
     label: 'Email Support',
-    value: 'thechibuezemartins@gmail.com',
-    onPress: () => Linking.openURL('mailto:thechibuezemartins@gmail.com'),
+    value: 'shawolhorizon@gmail.com',
+    onPress: () => Linking.openURL('mailto:shawolhorizon@gmail.com'),
   },
   {
     id: 'phone',

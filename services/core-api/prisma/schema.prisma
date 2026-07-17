@@ -60,6 +60,7 @@ model Voter {
   maritalStatus MaritalStatus
   state String
   LGA String
+  ward String
   education EducationLevel
   residentialAddress String
 

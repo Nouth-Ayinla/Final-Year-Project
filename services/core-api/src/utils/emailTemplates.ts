@@ -25,6 +25,7 @@ export const RegisterOfficerTemplate= (firstName : string , adminId : string, pi
       <h2>Welcome, ${firstName}</h2>
       <h2>Your Id is: ${adminId} </h2>
        <h2>Your pin is: ${pin} </h2>
+      <p style="color: #ef4444; font-weight: bold;">Note: Your activation PIN will expire in 24 hours.</p>
       <p>Thanks for joining our platform.</p>
     </div>
   `;
@@ -38,6 +39,7 @@ export const RegisterVoterTemplate= (firstName : string , VoterId : string, pin 
       <h2>Welcome, ${firstName}</h2>
       <h2>Your Id is : ${VoterId} </h2>
        <h2>Your Activation pin is : ${pin} </h2>
+      <p style="color: #ef4444; font-weight: bold;">Note: Your activation PIN will expire in 24 hours.</p>
       <p>Thanks for joining our platform.</p>
     </div>
   `;
