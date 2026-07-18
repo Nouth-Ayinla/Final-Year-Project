@@ -1,6 +1,7 @@
 import { AppError } from "../../utils/errors.js";
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
+import { voteEncryption } from "../../utils/voteEncryption.js";
 
 interface AuthenticatedUser {
   id: string;
@@ -72,11 +73,37 @@ export const CastVote = async (req: AuthenticatedRequest, res: Response, next: N
       return next(new AppError(400, "INVALID_INPUT", `You have already voted in this election`));
     }
 
+    // Generate anonymous voter token hash (preserves secret ballot)
+    const voterTokenHash = voteEncryption.generateVoterTokenHash(voterId, election.id);
+
+    // Encrypt the vote payload
+    const encryptionKey = process.env.VOTE_ENCRYPTION_KEY;
+    if (!encryptionKey) {
+      console.error("Missing VOTE_ENCRYPTION_KEY environment variable");
+      return next(
+        new AppError(500, "INTERNAL_SERVER_ERROR", `Encryption key not configured`)
+      );
+    }
+
+    const { encryptedVotePayload, iv } = voteEncryption.encryptVote(
+      candidateId,
+      election.id,
+      encryptionKey
+    );
+
+    // Generate vote hash for integrity verification
+    const voteHash = voteEncryption.generateVoteHash(candidateId, voterTokenHash);
+
     const vote = await prisma.vote.create({
       data: {
         voterId,
         electionId: election.id,
         candidateId,
+        // Encryption & Privacy Fields
+        encryptedVotePayload,
+        voterTokenHash,
+        voteHash,
+        encryptionIv: iv,
       },
     });
 

@@ -40,7 +40,7 @@ export function LoginForm({
       if (success) {
         router.push("/");
       } else {
-        setErrorMsg("Authentication failed. Please verify your credentials.");
+        setErrorMsg("Wrong Password or Email.");
       }
     } catch (err: any) {
       setErrorMsg("An unexpected error occurred. Please try again.");

@@ -7,7 +7,7 @@ export const adminLoginSchema = z.object({
   identifier: z
     .string()
     .trim()
-    .min(5, { message: "Identifier cannot be less than 5 characters" }),
+    .min(5, { message: "Email cannot be less than 5 characters" }),
 
   password: z
     .string()
