@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma.js";
 
 const baselineMockLogs = [
@@ -28,7 +29,7 @@ const baselineMockLogs = [
   }
 ];
 
-export const GetAuditLogs = async (req: Request, res: Response) => {
+export const GetAuditLogs = async (req: Request, res: Response, next: NextFunction) => {
   let dbLogs: any[] = [];
   try {
     dbLogs = await prisma.auditLog.findMany({

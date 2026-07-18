@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const DeleteOfficer = async (req: Request, res: Response) => {
+export const DeleteOfficer = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const officerId = req.params.officerId as string;
 
     if (!officerId) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid officer Id",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Invalid officer Id`));
     }
 
     const officer = await prisma.admin.findUnique({
@@ -19,16 +17,10 @@ export const DeleteOfficer = async (req: Request, res: Response) => {
     });
 
     if (!officer) {
-      return res.status(404).json({
-        success: false,
-        message: "Officer not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Officer not found`));
     }
     if (officer.role === "SUPER_ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "System admin cannot be deleted",
-      });
+      return next(new AppError(403, "FORBIDDEN", `System admin cannot be deleted`));
     }
     await prisma.admin.delete({
       where: {
@@ -43,9 +35,6 @@ export const DeleteOfficer = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error deleting Officer", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Error deleting Officer",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Error deleting Officer`));
   }
 };

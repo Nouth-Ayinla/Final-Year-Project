@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { AuthRequest } from "../../lib/authType.js";
 import { GenerateadminId, Generatepin } from "../../utils/utilities.js";
@@ -7,7 +8,7 @@ import { RegisterOfficerTemplate } from "../../utils/emailTemplates.js";
 import bcrypt from "bcrypt";
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 
-export const RegisterOfficer = async (req: Request, res: Response) => {
+export const RegisterOfficer = async (req: Request, res: Response, next: NextFunction) => {
   const authReq = req as AuthRequest;
   const {
     firstName,
@@ -27,9 +28,7 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
     if (role === "SUPER_ADMIN" || role === "ELECTION_ADMIN") {
       const requestingUserRole = authReq.user?.role;
       if (requestingUserRole !== "SUPER_ADMIN") {
-        return res.status(403).json({
-          message: "Access denied: Only Super Admin can register an Admin",
-        });
+        return next(new AppError(403, "FORBIDDEN", `Access denied: Only Super Admin can register an Admin`));
       }
     }
 
@@ -45,14 +44,12 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
       !education ||
       !residentialAddress
     ) {
-      return res.status(400).json({
-        message: "All required fields must be provided",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `All required fields must be provided`));
     }
 
     const file = req.file;
     if (!file) {
-      return res.status(400).json({ message: "Profile image is required" });
+      return next(new AppError(400, "INVALID_INPUT", `Profile image is required`));
     }
 
     const uploadedImage: any = await uploadToCloudinary(file.buffer);
@@ -63,7 +60,7 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return next(new AppError(400, "INVALID_INPUT", `User already exists`));
     }
 
     const generatedAdminId = GenerateadminId();
@@ -109,12 +106,8 @@ export const RegisterOfficer = async (req: Request, res: Response) => {
     console.error("RegisterOfficer error:", error);
 
     if (error.code === "P2002") {
-      return res.status(400).json({
-        message: "Admin ID already exists",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Admin ID already exists`));
     }
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal server error`));
   }
 };

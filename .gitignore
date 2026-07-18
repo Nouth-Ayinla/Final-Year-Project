@@ -107,3 +107,5 @@ convert_to_docx.py
 figures/
 
 
+# AGENTS
+AGENTS.md

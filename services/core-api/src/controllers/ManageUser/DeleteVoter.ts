@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const DeleteVoter = async (req: Request, res: Response) => {
+export const DeleteVoter = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const voterId = req.params.voterId as string;
 
     if (!voterId) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid officer Id",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Invalid officer Id`));
     }
 
     const voter = await prisma.voter.findUnique({
@@ -19,10 +17,7 @@ export const DeleteVoter = async (req: Request, res: Response) => {
     });
 
     if (!voter) {
-      return res.status(404).json({
-        success: false,
-        message: "voter not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `voter not found`));
     }
     await prisma.voter.delete({
       where: {
@@ -37,9 +32,6 @@ export const DeleteVoter = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error deleting voter", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Error deleting voter",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Error deleting voter`));
   }
 };

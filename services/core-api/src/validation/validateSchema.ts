@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodSchema, ZodError } from "zod";
+import { AppError } from "../utils/errors.js";
 
 export const validateSchema = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -8,15 +9,14 @@ export const validateSchema = (schema: ZodSchema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: "Validation error",
-          errors: error.issues.map((issue) => ({
-            field: issue.path.join("."),
-            message: issue.message,
-          })),
-        });
+        const details = error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          issue: issue.code.toUpperCase(),
+          message: issue.message,
+        }));
+        return next(new AppError(400, "VALIDATION_ERROR", "Validation failed", details));
       }
-      return res.status(500).json({ message: "Internal validation error" });
+      return next(error);
     }
   };
 };

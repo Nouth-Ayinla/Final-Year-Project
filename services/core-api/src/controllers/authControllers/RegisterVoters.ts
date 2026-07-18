@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { Generatepin, GenerateVoterId } from "../../utils/utilities.js";
 import { sendEmail } from "../../lib/email.service.js";
@@ -7,7 +8,7 @@ import bcrypt from "bcrypt";
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 import axios from 'axios';
 
-export const RegisterVoter = async (req: Request, res: Response) => {
+export const RegisterVoter = async (req: Request, res: Response, next: NextFunction) => {
   const {
     firstName,
     surname,
@@ -41,17 +42,13 @@ export const RegisterVoter = async (req: Request, res: Response) => {
       !education ||
       !residentialAddress
     ) {
-      return res.status(400).json({
-        message: "All required fields must be provided",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `All required fields must be provided`));
     }
 
     const file = req.file;
 
     if (!file) {
-      return res.status(400).json({
-        message: "Profile image is required",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Profile image is required`));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -72,9 +69,7 @@ export const RegisterVoter = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `User already exists`));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -115,9 +110,7 @@ export const RegisterVoter = async (req: Request, res: Response) => {
     } catch (faceError) {
       console.error("Face enrollment failed:", faceError);
 
-      return res.status(500).json({
-        message: "Voter registration failed: face enrollment error",
-      });
+      return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Voter registration failed: face enrollment error`));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -170,14 +163,10 @@ export const RegisterVoter = async (req: Request, res: Response) => {
     console.error(error);
 
     if (error.code === "P2002") {
-      return res.status(400).json({
-        message: "Admin ID already exists",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Admin ID already exists`));
     }
 
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal server error`));
   }
 };
 

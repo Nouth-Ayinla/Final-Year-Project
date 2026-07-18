@@ -1,16 +1,15 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../../lib/generateToken.js";
 
-export const ActivateAdminAccount = async (req: Request, res: Response) => {
+export const ActivateAdminAccount = async (req: Request, res: Response, next: NextFunction) => {
   const { adminId, activationPin, password } = req.body;
 
   try {
     if (!adminId || !activationPin || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `All fields are required`));
     }
 
     const user = await prisma.admin.findUnique({
@@ -27,23 +26,17 @@ export const ActivateAdminAccount = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({
-        message: "Admin not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Admin not found`));
     }
 
     if (user.isActivated) {
-      return res.status(400).json({
-        message: "Account already activated",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Account already activated`));
     }
 
     const pinAgeMs = Date.now() - new Date(user.createdAt).getTime();
     const pinTtlMs = 24 * 60 * 60 * 1000; // 24 hours
     if (pinAgeMs > pinTtlMs) {
-      return res.status(400).json({
-        message: "Activation PIN has expired. Please contact your system administrator to generate a new PIN.",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Activation PIN has expired. Please contact your system administrator to generate a new PIN.`));
     }
 
     const isPinCorrect = await bcrypt.compare(
@@ -52,9 +45,7 @@ export const ActivateAdminAccount = async (req: Request, res: Response) => {
     );
 
     if (!isPinCorrect) {
-      return res.status(400).json({
-        message: "Invalid activation pin",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Invalid activation pin`));
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -77,8 +68,6 @@ export const ActivateAdminAccount = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error in ActivateAdmin Controller", error);
 
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };

@@ -1,31 +1,23 @@
-import { Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { AuthRequest } from "../../lib/authType.js";
 
-export const VerifyBiometric = async (req: AuthRequest, res: Response) => {
+export const VerifyBiometric = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const file = req.file;
   const { electionId } = req.body;
   const voterId = req.user?.id;
 
   if (!voterId) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized",
-    });
+    return next(new AppError(401, "UNAUTHORIZED", `Unauthorized`));
   }
 
   if (!electionId) {
-    return res.status(400).json({
-      success: false,
-      message: "Election ID is required.",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Election ID is required.`));
   }
 
   if (!file) {
-    return res.status(400).json({
-      success: false,
-      message: "Verification image is required.",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Verification image is required.`));
   }
 
   try {
@@ -35,17 +27,11 @@ export const VerifyBiometric = async (req: AuthRequest, res: Response) => {
     });
 
     if (!voter) {
-      return res.status(404).json({
-        success: false,
-        message: "Voter record not found.",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Voter record not found.`));
     }
 
     if (!voter.profilePicture) {
-      return res.status(400).json({
-        success: false,
-        message: "Voter does not have an enrolled profile picture to match against.",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Voter does not have an enrolled profile picture to match against.`));
     }
 
     // 2. Resolve target election ID dynamically if missing
@@ -60,10 +46,7 @@ export const VerifyBiometric = async (req: AuthRequest, res: Response) => {
     }
 
     if (!targetElectionId) {
-      return res.status(400).json({
-        success: false,
-        message: "No active election configured to record biometric verification logs.",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `No active election configured to record biometric verification logs.`));
     }
 
     const election = await prisma.election.findUnique({
@@ -71,10 +54,7 @@ export const VerifyBiometric = async (req: AuthRequest, res: Response) => {
     });
 
     if (!election) {
-      return res.status(404).json({
-        success: false,
-        message: "Election not found.",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Election not found.`));
     }
 
     // 2. Prepare FormData payload for Python face microservice
@@ -181,9 +161,6 @@ export const VerifyBiometric = async (req: AuthRequest, res: Response) => {
       console.error("Error creating failed biometric attempt log:", dbErr);
     }
 
-    return res.status(500).json({
-      success: false,
-      message: "Biometric matching failed due to microservice communication error.",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Biometric matching failed due to microservice communication error.`));
   }
 };

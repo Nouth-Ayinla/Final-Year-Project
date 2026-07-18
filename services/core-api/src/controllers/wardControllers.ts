@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import { AppError } from "../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma.js";
 
-export const CreateWard = async (req: Request, res: Response) => {
+export const CreateWard = async (req: Request, res: Response, next: NextFunction) => {
   const { name, code, lgaName } = req.body;
 
   try {
     if (!name || !code || !lgaName) {
-      return res.status(400).json({
-        success: false,
-        message: "name, code, and lgaName are required fields.",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `name, code, and lgaName are required fields.`));
     }
 
     const existingWard = await prisma.ward.findUnique({
@@ -17,10 +15,7 @@ export const CreateWard = async (req: Request, res: Response) => {
     });
 
     if (existingWard) {
-      return res.status(400).json({
-        success: false,
-        message: `Ward with code '${code}' already exists.`,
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Ward with code '${code}' already exists.`));
     }
 
     const newWard = await prisma.ward.create({
@@ -38,14 +33,11 @@ export const CreateWard = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error in CreateWard controller:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };
 
-export const GetWards = async (req: Request, res: Response) => {
+export const GetWards = async (req: Request, res: Response, next: NextFunction) => {
   const { lgaName } = req.query;
 
   try {
@@ -65,9 +57,6 @@ export const GetWards = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error in GetWards controller:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };

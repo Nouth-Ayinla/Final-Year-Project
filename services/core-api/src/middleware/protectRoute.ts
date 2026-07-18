@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { AuthRequest } from "../lib/authType.js";
+import { AppError } from "../utils/errors.js";
 
 export const protectRoute = async (
   req: AuthRequest,
@@ -19,7 +20,7 @@ export const protectRoute = async (
     }
 
     if (!token) {
-      return res.status(401).json({ message: "User not logged in" });
+      return next(new AppError(401, "UNAUTHORIZED", "User not logged in"));
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
@@ -27,7 +28,7 @@ export const protectRoute = async (
     };
 
     if (!decoded?.userId) {
-      return res.status(401).json({ message: "Invalid token" });
+      return next(new AppError(401, "UNAUTHORIZED", "Invalid token"));
     }
 
     let user = await prisma.voter.findUnique({
@@ -56,7 +57,7 @@ export const protectRoute = async (
       });
 
       if (!adminUser) {
-        return res.status(404).json({ message: "User not found" });
+        return next(new AppError(404, "USER_NOT_FOUND", "User not found"));
       }
 
       user = adminUser;
@@ -74,6 +75,6 @@ export const protectRoute = async (
     next();
   } catch (error: any) {
     console.log("Error in protectRoute middleware:", error.message);
-    return res.status(501).json({ message: "Authorization failed" });
+    return next(new AppError(401, "UNAUTHORIZED", "Authorization failed"));
   }
 };

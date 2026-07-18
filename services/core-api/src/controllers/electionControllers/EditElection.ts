@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const EditElection = async (req: Request, res: Response) => {
+export const EditElection = async (req: Request, res: Response, next: NextFunction) => {
   const { electionId } = req.params as { electionId: string };
   const { title, description, startDate, endDate, status } = req.body;
 
@@ -13,10 +14,7 @@ export const EditElection = async (req: Request, res: Response) => {
     });
 
     if (!election) {
-      return res.status(404).json({
-        success: false,
-        message: "Election not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Election not found`));
     }
 
     const updatedElection = await prisma.election.update({
@@ -40,9 +38,6 @@ export const EditElection = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error editing election:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to edit election",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to edit election`));
   }
 };

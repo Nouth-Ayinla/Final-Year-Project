@@ -1,16 +1,15 @@
+import { AppError } from "../../utils/errors.js";
 import { prisma } from "../../lib/prisma.js";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import { generateToken } from "../../lib/generateToken.js";
 
-export const VoterLogin = async (req: Request, res: Response) => {
+export const VoterLogin = async (req: Request, res: Response, next: NextFunction) => {
   const { identifier, password } = req.body;
 
   try {
     if (!identifier || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `All fields are required`));
     }
 
     const user = await prisma.voter.findFirst({
@@ -38,29 +37,21 @@ export const VoterLogin = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid credentials",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Invalid credentials`));
     }
 
     if (!user.isActivated) {
-      return res.status(400).json({
-        message: "Account not activated",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Account not activated`));
     }
 
     if (!user.password) {
-      return res.status(400).json({
-        message: "No password set for this account",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `No password set for this account`));
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      return res.status(400).json({
-        message: "Incorrect password",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Incorrect password`));
     }
 
     generateToken(user.id, res);
@@ -70,8 +61,6 @@ export const VoterLogin = async (req: Request, res: Response) => {
       data: user,
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };

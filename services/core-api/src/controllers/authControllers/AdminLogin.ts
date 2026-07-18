@@ -1,17 +1,16 @@
+import { AppError } from "../../utils/errors.js";
 import { prisma } from "../../lib/prisma.js";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import { generateToken } from "../../lib/generateToken.js";
 import { logAudit } from "../../utils/auditLogger.js";
 
-export const AdminLogin = async (req: Request, res: Response) => {
+export const AdminLogin = async (req: Request, res: Response, next: NextFunction) => {
   const { identifier, password } = req.body;
 
   try {
     if (!identifier || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `All fields are required`));
     }
 
     const user = await prisma.admin.findFirst({
@@ -29,32 +28,24 @@ export const AdminLogin = async (req: Request, res: Response) => {
 
     if (!user) {
       await logAudit(identifier, "LOGIN_FAILURE", "Admin", "unknown");
-      return res.status(400).json({
-        message: "Invalid credentials",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Invalid credentials`));
     }
 
     if (!user.isActivated) {
       await logAudit(user.email, "LOGIN_FAILURE", "Admin", user.adminId);
-      return res.status(400).json({
-        message: "Account not activated",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Account not activated`));
     }
 
     if (!user.password) {
       await logAudit(user.email, "LOGIN_FAILURE", "Admin", user.adminId);
-      return res.status(400).json({
-        message: "No password set for this account",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `No password set for this account`));
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
       await logAudit(user.email, "LOGIN_FAILURE", "Admin", user.adminId);
-      return res.status(400).json({
-        message: "Incorrect password",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Incorrect password`));
     }
 
     generateToken(user.id, res);
@@ -68,8 +59,6 @@ export const AdminLogin = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error in Admin Login", error);
 
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };

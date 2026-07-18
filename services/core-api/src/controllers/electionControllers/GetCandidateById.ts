@@ -1,11 +1,12 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
 interface Params {
   candidateId: string;
 }
 
-export const GetCandidateById = async (req: Request<Params>, res: Response) => {
+export const GetCandidateById = async (req: Request<Params>, res: Response, next: NextFunction) => {
   const { candidateId } = req.params;
 
   const candidate = await prisma.candidate.findUnique({
@@ -29,9 +30,7 @@ export const GetCandidateById = async (req: Request<Params>, res: Response) => {
   });
 
   if (!candidate) {
-    return res.status(404).json({
-      message: "Candidate not found",
-    });
+    return next(new AppError(404, "RESOURCE_NOT_FOUND", `Candidate not found`));
   }
 
   return res.status(200).json({

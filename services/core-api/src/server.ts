@@ -10,6 +10,7 @@ import wardRoutes from "./routes/wardRoutes.js";
 import auditLogRoutes from "./routes/auditLogRoutes.js";
 import biometricReviewRoutes from "./routes/biometricReviewRoutes.js";
 import { startElectionScheduler } from "./lib/electionSchedular.js";
+import { requestTracer, errorHandler } from "./middleware/errorHandler.js";
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -24,6 +25,7 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(requestTracer);
 
 app.use((req, res, next) => {
   next();
@@ -35,6 +37,8 @@ app.use("/api/election", electionRoutes);
 app.use("/api/ward", wardRoutes);
 app.use("/api/audit-logs", auditLogRoutes);
 app.use("/api/biometrics", biometricReviewRoutes);
+
+app.use(errorHandler);
 
 app.listen(PORT, async () => {
   try {

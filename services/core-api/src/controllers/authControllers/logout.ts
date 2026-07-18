@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../lib/prisma.js";
 import { logAudit } from "../../utils/auditLogger.js";
 
-export const logout = async (req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies.jwt;
     if (token) {
@@ -34,8 +35,6 @@ export const logout = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.log("Error in LogOutController", error.message);
 
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };

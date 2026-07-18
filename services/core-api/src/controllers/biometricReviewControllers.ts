@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { AppError } from "../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma.js";
 
-export const GetBiometricReviews = async (req: Request, res: Response) => {
+export const GetBiometricReviews = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const voters = await prisma.voter.findMany({
       include: {
@@ -48,14 +49,11 @@ export const GetBiometricReviews = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error in GetBiometricReviews controller:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };
 
-export const UpdateBiometricStatus = async (req: Request, res: Response) => {
+export const UpdateBiometricStatus = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { faceStatus, fingerprintStatus, flagged } = req.body;
 
@@ -90,9 +88,6 @@ export const UpdateBiometricStatus = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error in UpdateBiometricStatus controller:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal Server Error`));
   }
 };

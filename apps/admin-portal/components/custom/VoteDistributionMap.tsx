@@ -16,6 +16,7 @@ type MapOverlay = {
 type VoteDistributionMapProps = {
   mapImageUrl?: string; // Kept for backwards compatibility
   overlays: MapOverlay[];
+  wardStats?: any[];
 };
 
 const ONDO_LGAS = [
@@ -85,7 +86,7 @@ const getBoundingBox = (pointsStr: string) => {
   };
 };
 
-export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
+export function VoteDistributionMap({ overlays, wardStats = [] }: VoteDistributionMapProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredLgaId, setHoveredLgaId] = useState<string | null>(null);
   const [selectedLgaId, setSelectedLgaId] = useState<string | null>(null);
@@ -415,22 +416,54 @@ export function VoteDistributionMap({ overlays }: VoteDistributionMapProps) {
                   </span>
                 </div>
                 {activeWards.length > 0 ? (
-                  activeWards.map((ward) => (
-                    <div
-                      key={ward.id}
-                      className="p-3 rounded-lg border border-border bg-card hover:bg-stone-50 flex items-center justify-between text-xs"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <span className="font-extrabold text-foreground">{ward.name}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          Code: {ward.code}
-                        </span>
+                  activeWards.map((ward) => {
+                    const match = wardStats.find(
+                      (s: any) => 
+                        s.lgaName.toLowerCase().replace(/[^a-z0-9]/g, "") === selectedLgaObj?.name.toLowerCase().replace(/[^a-z0-9]/g, "") &&
+                        s.wardName.toLowerCase().replace(/[^a-z0-9]/g, "") === ward.name.toLowerCase().replace(/[^a-z0-9]/g, "")
+                    );
+
+                    return (
+                      <div
+                        key={ward.id}
+                        className="p-3 rounded-lg border border-border bg-card hover:bg-stone-50/50 flex flex-col gap-2 text-xs transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-extrabold text-foreground">{ward.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              Code: {ward.code}
+                            </span>
+                          </div>
+                          {match && match.total > 0 ? (
+                            <span className="px-2 py-0.5 text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20 rounded-full">
+                              {match.total} votes
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 text-[10px] font-medium bg-stone-100 text-stone-500 border border-stone-200 rounded-full">
+                              0 votes
+                            </span>
+                          )}
+                        </div>
+                        
+                        {match && match.total > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/50">
+                            {Object.entries(match.partyCounts)
+                              .sort((a: any, b: any) => b[1] - a[1])
+                              .map(([party, count]: any) => (
+                                <span
+                                  key={party}
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold text-white"
+                                  style={{ backgroundColor: getPartyColor(party, customParties) }}
+                                >
+                                  {party}: {count}
+                                </span>
+                              ))}
+                          </div>
+                        )}
                       </div>
-                      <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full">
-                        Active
-                      </span>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center text-xs text-muted-foreground py-10 italic">
                     No wards mapped yet in {selectedLgaObj?.name}.

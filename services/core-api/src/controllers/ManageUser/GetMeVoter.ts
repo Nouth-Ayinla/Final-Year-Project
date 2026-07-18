@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
 interface AuthenticatedRequest extends Request {
@@ -8,13 +9,10 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const getMeVoter = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const getMeVoter = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     if (!req.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return next(new AppError(401, "UNAUTHORIZED", `Unauthorized`));
     }
 
     const user = await prisma.voter.findUnique({
@@ -40,12 +38,12 @@ export const getMeVoter = async (
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `User not found`));
     }
 
     return res.status(200).json(user);
   } catch (err) {
     console.error("GetMe error:", err);
-    return res.status(500).json({ message: "Server error" });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Server error`));
   }
 };

@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const GetAllParties = async (req: Request, res: Response) => {
+export const GetAllParties = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parties = await prisma.party.findMany({
       orderBy: {
@@ -15,9 +16,6 @@ export const GetAllParties = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Get All Parties Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to load political parties due to internal server error.",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to load political parties due to internal server error.`));
   }
 };

@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const GetRegisteredOfficers = async (req: Request, res: Response) => {
+export const GetRegisteredOfficers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await prisma.admin.findMany({
       select: {
@@ -22,9 +23,6 @@ export const GetRegisteredOfficers = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching officers:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch officers",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to fetch officers`));
   }
 };

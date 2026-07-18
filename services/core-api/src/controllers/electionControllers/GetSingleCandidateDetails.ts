@@ -1,24 +1,16 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const GetSingleCandidateDetails = async (
-  req: Request,
-  res: Response,
-) => {
+export const GetSingleCandidateDetails = async (req: Request, res: Response, next: NextFunction) => {
   const { electionId, candidateId } = req.params;
 
   if (!electionId || typeof electionId !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid election ID",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Invalid election ID`));
   }
 
   if (!candidateId || typeof candidateId !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid candidate ID",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Invalid candidate ID`));
   }
 
   try {
@@ -50,10 +42,7 @@ export const GetSingleCandidateDetails = async (
     });
 
     if (!data) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Candidate not found`));
     }
 
     return res.status(200).json({
@@ -63,9 +52,6 @@ export const GetSingleCandidateDetails = async (
   } catch (error) {
     console.error("Error fetching candidate:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch election candidate",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to fetch election candidate`));
   }
 };

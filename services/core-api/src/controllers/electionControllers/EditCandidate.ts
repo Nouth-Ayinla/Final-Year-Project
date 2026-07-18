@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 import {
@@ -13,16 +14,11 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const EditCandidate = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const EditCandidate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const candidateId = req.params.candidateId as string;
 
   if (!candidateId) {
-    return res.status(400).json({
-      message: "Candidate ID is required",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Candidate ID is required`));
   }
 
   const {
@@ -50,9 +46,7 @@ export const EditCandidate = async (
     !education ||
     !party
   ) {
-    return res.status(400).json({
-      message: "All required structural fields must be provided",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `All required structural fields must be provided`));
   }
 
   try {
@@ -64,21 +58,15 @@ export const EditCandidate = async (
     });
 
     if (!admin) {
-      return res.status(404).json({
-        message: "Admin not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Admin not found`));
     }
 
     if (!admin.isActivated) {
-      return res.status(403).json({
-        message: "Account not activated",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Account not activated`));
     }
 
     if (admin.role !== "SUPER_ADMIN" && admin.role !== "ELECTION_ADMIN") {
-      return res.status(403).json({
-        message: "Only admins can modify candidates",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Only admins can modify candidates`));
     }
 
     const existingCandidate = await prisma.candidate.findUnique({
@@ -88,9 +76,7 @@ export const EditCandidate = async (
     });
 
     if (!existingCandidate) {
-      return res.status(404).json({
-        message: "Candidate not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Candidate not found`));
     }
 
    
@@ -101,17 +87,12 @@ export const EditCandidate = async (
     });
 
     if (!election) {
-      return res.status(404).json({
-        message: "Election not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Election not found`));
     }
 
   
     if (election.status !== "DRAFT") {
-      return res.status(400).json({
-        message:
-          "Candidates can only be modified while the election is in DRAFT state",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Candidates can only be modified while the election is in DRAFT state`));
     }
 
     let profilePicture = existingCandidate.imageUrl;
@@ -122,9 +103,7 @@ export const EditCandidate = async (
       const uploadedImage: any = await uploadToCloudinary(file.buffer);
 
       if (!uploadedImage?.secure_url) {
-        return res.status(500).json({
-          message: "New image upload failed",
-        });
+        return next(new AppError(500, "INTERNAL_SERVER_ERROR", `New image upload failed`));
       }
 
       profilePicture = uploadedImage.secure_url;
@@ -158,9 +137,6 @@ export const EditCandidate = async (
   } catch (error) {
     console.error("Update Candidate Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal server error`));
   }
 };

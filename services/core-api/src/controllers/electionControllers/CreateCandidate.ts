@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 
@@ -8,19 +9,14 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const CreateCandidate = async (
-  req: AuthenticatedRequest,
-  res: Response,
-) => {
+export const CreateCandidate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const electionId: string | undefined =
     typeof req.params.electionId === "string"
       ? req.params.electionId
       : undefined;
 
   if (!electionId) {
-    return res.status(400).json({
-      message: "Invalid election ID",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Invalid election ID`));
   }
 
   const {
@@ -49,26 +45,20 @@ export const CreateCandidate = async (
     !bio ||
     !party
   ) {
-    return res.status(400).json({
-      message: "All required fields must be provided",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `All required fields must be provided`));
   }
 
   const file = req.file;
 
   if (!file) {
-    return res.status(400).json({
-      message: "Profile image is required",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Profile image is required`));
   }
 
   try {
     const uploadedImage: any = await uploadToCloudinary(file.buffer);
 
     if (!uploadedImage?.secure_url) {
-      return res.status(500).json({
-        message: "Image upload failed",
-      });
+      return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Image upload failed`));
     }
 
     const profilePicture = uploadedImage.secure_url;
@@ -80,21 +70,15 @@ export const CreateCandidate = async (
     });
 
     if (!admin) {
-      return res.status(404).json({
-        message: "Admin not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Admin not found`));
     }
 
     if (!admin.isActivated) {
-      return res.status(403).json({
-        message: "Account not activated",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Account not activated`));
     }
 
     if (admin.role !== "SUPER_ADMIN" && admin.role !== "ELECTION_ADMIN") {
-      return res.status(403).json({
-        message: "Only admins can create candidates",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Only admins can create candidates`));
     }
 
     const election = await prisma.election.findUnique({
@@ -104,16 +88,11 @@ export const CreateCandidate = async (
     });
 
     if (!election) {
-      return res.status(404).json({
-        message: "Election not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Election not found`));
     }
 
     if (election.status !== "DRAFT") {
-      return res.status(400).json({
-        message:
-          "Candidates can only be added while the election is in DRAFT state",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Candidates can only be added while the election is in DRAFT state`));
     }
 
     const candidate = await prisma.candidate.create({
@@ -142,9 +121,6 @@ export const CreateCandidate = async (
   } catch (error) {
     console.error("Create Candidate Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal server error`));
   }
 };

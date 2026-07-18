@@ -46,6 +46,7 @@ type LiveStats = {
     percentage: number;
     color: "primary" | "tertiary";
   }[];
+  wardStats?: any[];
   leader: {
     candidateName: string;
     partyName: string;
@@ -80,6 +81,7 @@ export default function DashboardLivePage() {
     ],
     partyPerformanceData: [],
     mapOverlays: [],
+    wardStats: [],
     leader: {
       candidateName: "No Candidate",
       partyName: "N/A",
@@ -233,6 +235,7 @@ export default function DashboardLivePage() {
           <VoteDistributionMap
             mapImageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuBC1hWpD2P6t1-jJrMpbcLO6YP14GUP3HTckMgpwG9YrcxNG0Ak0JOqHWjaMSV-eUjZAQ7438zyCTuNgJWjUG9rj3icY6mOVEi7dAI6V_Zndn2UvLNi3iPG1H0v5HXRSwtkra8oWO69L4P3YxPZ-cPqngqz7KTFkeUQmERWtDWQiRjMavbmkgrxRUV1dkpupOiYPoctAgOW9MRfUslr2GiV7lJmD7rxsTpaPMDOWu71F298D52AZIJW01KnXeuv-pMvR84tp0MKCNk"
             overlays={stats.mapOverlays}
+            wardStats={stats.wardStats}
           />
 
           {/* Secondary Row: Performance Charts */}

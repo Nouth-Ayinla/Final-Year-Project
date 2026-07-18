@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const DeleteCandidate = async (req: Request, res: Response) => {
+export const DeleteCandidate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const candidateId = req.params.candidateId as string;
 
     if (!candidateId) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid candidate ID",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Invalid candidate ID`));
     }
 
     const candidate = await prisma.candidate.findUnique({
@@ -25,18 +23,11 @@ export const DeleteCandidate = async (req: Request, res: Response) => {
     });
 
     if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Candidate not found`));
     }
 
     if (candidate.election.status !== "DRAFT") {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Candidates can only be removed while the election is in draft state",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Candidates can only be removed while the election is in draft state`));
     }
 
     await prisma.candidate.delete({
@@ -50,9 +41,6 @@ export const DeleteCandidate = async (req: Request, res: Response) => {
       message: "Candidate removed successfully",
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to remove candidate",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to remove candidate`));
   }
 };

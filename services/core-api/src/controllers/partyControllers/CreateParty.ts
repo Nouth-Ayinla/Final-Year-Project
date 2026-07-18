@@ -1,24 +1,19 @@
-import { Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { AuthRequest } from "../../lib/authType.js";
 
-export const CreateParty = async (req: AuthRequest, res: Response) => {
+export const CreateParty = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // 1. Role verification
     if (req.user?.role !== "SUPER_ADMIN" && req.user?.role !== "ELECTION_ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied: Only administrators can register political parties.",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Access denied: Only administrators can register political parties.`));
     }
 
     const { name, abbreviation, primaryColor, secondaryColor, description } = req.body;
 
     if (!name || !abbreviation) {
-      return res.status(400).json({
-        success: false,
-        message: "Party name and abbreviation are required.",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Party name and abbreviation are required.`));
     }
 
     const abbrUpper = abbreviation.trim().toUpperCase();
@@ -34,10 +29,7 @@ export const CreateParty = async (req: AuthRequest, res: Response) => {
     });
 
     if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: `A political party with name "${name}" or abbreviation "${abbrUpper}" already exists.`,
-      });
+      return next(new AppError(400, "INVALID_INPUT", `A political party with name "${name}" or abbreviation "${abbrUpper}" already exists.`));
     }
 
     // 3. Create Party
@@ -59,9 +51,6 @@ export const CreateParty = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Create Party Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to register political party due to internal server error.",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to register political party due to internal server error.`));
   }
 };

@@ -1,13 +1,14 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 
 interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
-export const checkAuth = async (req: AuthenticatedRequest, res: Response) => {
+export const checkAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
-       return res.status(401).json({ message: "Not authenticated" });
+       return next(new AppError(401, "UNAUTHORIZED", `Not authenticated`));
     }
     res.status(200).json(req.user);
   } catch (error) {

@@ -1,14 +1,12 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const GetCandidatesInElection = async (req: Request, res: Response) => {
+export const GetCandidatesInElection = async (req: Request, res: Response, next: NextFunction) => {
   const { electionId } = req.params;
 
   if (!electionId || typeof electionId !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid election ID",
-    });
+    return next(new AppError(400, "INVALID_INPUT", `Invalid election ID`));
   }
 
   try {
@@ -43,9 +41,6 @@ export const GetCandidatesInElection = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching candidates:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch election candidates",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to fetch election candidates`));
   }
 };

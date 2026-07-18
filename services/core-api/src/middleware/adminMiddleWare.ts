@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../lib/authType.js";
-
+import { AppError } from "../utils/errors.js";
 
 export const adminOnly = (
   req: AuthRequest,
@@ -8,11 +8,11 @@ export const adminOnly = (
   next: NextFunction
 ) => {
   if (!req.user) {
-    return res.status(401).json({ message: "Not authenticated" });
+    return next(new AppError(401, "UNAUTHORIZED", "Not authenticated"));
   }
 
   if (req.user.role !== "SUPER_ADMIN" && req.user.role !== "ELECTION_ADMIN") {
-    return res.status(403).json({ message: "Access denied: Admins only" });
+    return next(new AppError(403, "FORBIDDEN", "Access denied: Admins only"));
   }
 
   next();

@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
 interface AuthenticatedUser {
@@ -12,19 +13,13 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const CastVote = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const CastVote = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { candidateId } = req.params;
     const voterId = req.user?.id;
 
     if (!voterId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
+      return next(new AppError(401, "UNAUTHORIZED", `Unauthorized`));
     }
 
     const candidate = await prisma.candidate.findUnique({
@@ -37,35 +32,23 @@ export const CastVote = async (
     });
 
     if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Candidate not found`));
     }
 
     const election = candidate.election;
 
     if (!election) {
-      return res.status(404).json({
-        success: false,
-        message: "Election not found",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Election not found`));
     }
 
     const now = new Date();
 
     if (now < election.startDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Election has not started",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Election has not started`));
     }
 
     if (now > election.endDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Election has ended",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Election has ended`));
     }
 
     const existingVote = await prisma.vote.findUnique({
@@ -86,10 +69,7 @@ export const CastVote = async (
         },
       });
 
-      return res.status(400).json({
-        success: false,
-        message: "You have already voted in this election",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `You have already voted in this election`));
     }
 
     const vote = await prisma.vote.create({
@@ -108,9 +88,6 @@ export const CastVote = async (
   } catch (error) {
     console.error("Cast Vote Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Internal server error`));
   }
 };

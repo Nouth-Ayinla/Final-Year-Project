@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
-export const DeleteElection = async (req: Request, res: Response) => {
+export const DeleteElection = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const electionId = req.params.electionId as string;
 
         if (!electionId) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid election Id",
-            });
+            return next(new AppError(400, "INVALID_INPUT", `Invalid election Id`));
         }
         const election = await prisma.election.findUnique({
             where: {
@@ -17,16 +15,10 @@ export const DeleteElection = async (req: Request, res: Response) => {
             },
         });
         if (!election) {
-            return res.status(404).json({
-                success: false,
-                message: "Election not found",
-            });
+            return next(new AppError(404, "RESOURCE_NOT_FOUND", `Election not found`));
         }
         if(election.status !== "DRAFT"){
-               return res.status(404).json({
-                success: false,
-                message: "Only drafted election can be deleted",
-            });
+               return next(new AppError(404, "RESOURCE_NOT_FOUND", `Only drafted election can be deleted`));
         }
 
         await prisma.election.delete({
@@ -41,9 +33,6 @@ export const DeleteElection = async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error("Error deleting election:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to delete election",
-        });
+        return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to delete election`));
     }
 }

@@ -1,14 +1,12 @@
-import { Request, Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 
 interface Params {
   electionId: string;
 }
 
-export const GetCandidateInElectionMobileSide = async (
-  req: Request<Params>,
-  res: Response,
-) => {
+export const GetCandidateInElectionMobileSide = async (req: Request<Params>, res: Response, next: NextFunction) => {
   const { electionId } = req.params;
 
   try {
@@ -40,9 +38,6 @@ export const GetCandidateInElectionMobileSide = async (
   } catch (error) {
     console.error("Error fetching candidates:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch election candidates",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to fetch election candidates`));
   }
 };

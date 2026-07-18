@@ -1,24 +1,19 @@
-import { Response } from "express";
+import { AppError } from "../../utils/errors.js";
+import { Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma.js";
 import { AuthRequest } from "../../lib/authType.js";
 
-export const DeleteParty = async (req: AuthRequest, res: Response) => {
+export const DeleteParty = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // 1. Role verification
     if (req.user?.role !== "SUPER_ADMIN" && req.user?.role !== "ELECTION_ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied: Only administrators can delete political parties.",
-      });
+      return next(new AppError(403, "FORBIDDEN", `Access denied: Only administrators can delete political parties.`));
     }
 
     const partyId = req.params.partyId as string;
 
     if (!partyId) {
-      return res.status(400).json({
-        success: false,
-        message: "Party ID is required.",
-      });
+      return next(new AppError(400, "INVALID_INPUT", `Party ID is required.`));
     }
 
     // Check if party exists
@@ -27,10 +22,7 @@ export const DeleteParty = async (req: AuthRequest, res: Response) => {
     });
 
     if (!party) {
-      return res.status(404).json({
-        success: false,
-        message: "Political party not found.",
-      });
+      return next(new AppError(404, "RESOURCE_NOT_FOUND", `Political party not found.`));
     }
 
     // 2. Prevent deletion if candidates are linked (for structural integrity)
@@ -62,9 +54,6 @@ export const DeleteParty = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Delete Party Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete political party due to internal server error.",
-    });
+    return next(new AppError(500, "INTERNAL_SERVER_ERROR", `Failed to delete political party due to internal server error.`));
   }
 };
