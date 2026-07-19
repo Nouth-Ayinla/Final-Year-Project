@@ -165,8 +165,8 @@ export default function FacialVerificationScreen() {
             router.replace('/(auth)/login');
           }
         } else {
-          // Enrollment mode - go to biometric setup
-          router.replace('/(auth)/biometric');
+          // Enrollment mode - go to biometric setup (optional)
+          router.replace('/(auth)/biometric?compulsory=false');
         }
       } else {
         setStage('camera');

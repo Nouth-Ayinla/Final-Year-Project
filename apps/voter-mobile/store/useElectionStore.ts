@@ -8,6 +8,7 @@ import {
   Election,
   Candidate,
   CandidateDetail,
+  VoterInfo,
 } from '@/services/electionService';
 
 interface ElectionState {
@@ -15,24 +16,25 @@ interface ElectionState {
   elections: Election[];
   candidates: Candidate[];
   candidateDetail: CandidateDetail | null;
+  voterInfo: VoterInfo | null;
 
   // Loading states
   isLoadingElections: boolean;
   isLoadingCandidates: boolean;
   isLoadingDetail: boolean;
   isCastingVote: boolean;
+  isLoadingVoterInfo: boolean;
 
   // Error
   error: string | null;
-
-  // Whether the current voter has already voted in an election (keyed by electionId)
-  votedElections: Record<string, boolean>;
 
   // Actions
   fetchElections: () => Promise<void>;
   fetchCandidates: (electionId: string) => Promise<void>;
   fetchCandidateDetail: (electionId: string, candidateId: string) => Promise<void>;
   castVote: (candidateId: string, electionId: string) => Promise<boolean>;
+  fetchVoterInfo: () => Promise<void>;
+  hasVotedInElection: (electionId: string) => boolean;
   clearError: () => void;
   clearCandidates: () => void;
   clearCandidateDetail: () => void;
@@ -42,12 +44,13 @@ export const useElectionStore = create<ElectionState>((set, get) => ({
   elections: [],
   candidates: [],
   candidateDetail: null,
+  voterInfo: null,
   isLoadingElections: false,
   isLoadingCandidates: false,
   isLoadingDetail: false,
   isCastingVote: false,
+  isLoadingVoterInfo: false,
   error: null,
-  votedElections: {},
 
   fetchElections: async () => {
     set({ isLoadingElections: true, error: null });
@@ -84,19 +87,38 @@ export const useElectionStore = create<ElectionState>((set, get) => ({
 
   castVote: async (candidateId: string, electionId: string) => {
     set({ isCastingVote: true, error: null });
+    console.log("entered here");
     try {
       await electionService.castVote(candidateId);
-      // Mark this election as voted in local state
-      set((state) => ({
-        isCastingVote: false,
-        votedElections: { ...state.votedElections, [electionId]: true },
-      }));
+      // Refresh voter info to get updated voting history
+      await get().fetchVoterInfo();
+      set({ isCastingVote: false });
+
+      console.log("passed in here")
       return true;
     } catch (err: any) {
       const message = err.response?.data?.message || 'Failed to cast vote.';
+      console.log(message);
       set({ isCastingVote: false, error: message });
       return false;
     }
+  },
+
+  fetchVoterInfo: async () => {
+    set({ isLoadingVoterInfo: true, error: null });
+    try {
+      const res = await electionService.getVoterInfo();
+      set({ voterInfo: res.data, isLoadingVoterInfo: false });
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to load voter info.';
+      set({ isLoadingVoterInfo: false, error: message });
+    }
+  },
+
+  hasVotedInElection: (electionId: string) => {
+    const { voterInfo } = get();
+    if (!voterInfo || !voterInfo.votes) return false;
+    return voterInfo.votes.some((vote) => vote.electionId === electionId);
   },
 
   clearError: () => set({ error: null }),

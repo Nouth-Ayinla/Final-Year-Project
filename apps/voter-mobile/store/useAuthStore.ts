@@ -83,6 +83,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (token && voterJson) {
         const voter = sanitiseVoter(JSON.parse(voterJson));
         set({ voter, isAuthenticated: true, isBiometricVerified: false, isInitializing: false });
+        // Import dynamically to avoid circular dependency
+        const { useElectionStore } = await import('./useElectionStore');
+        useElectionStore.getState().fetchVoterInfo();
       } else {
         set({ isInitializing: false });
       }

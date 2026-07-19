@@ -61,9 +61,12 @@ export default function DashboardScreen() {
   const router = useRouter();
   const voter = useAuthStore((s) => s.voter);
   const isBiometricVerified = useAuthStore((s) => s.isBiometricVerified);
-  const { elections, fetchElections, votedElections } = useElectionStore();
+  const { elections, fetchElections, fetchVoterInfo, hasVotedInElection } = useElectionStore();
 
-  useEffect(() => { fetchElections(); }, []);
+  useEffect(() => {
+    fetchElections();
+    fetchVoterInfo();
+  }, []);
 
   const activeElection = elections.find((e) => e.status === 'ACTIVE');
   const upcomingElection = elections.find((e) => e.status === 'UPCOMING');
@@ -171,11 +174,11 @@ export default function DashboardScreen() {
                 } else if (action.id === 'support') {
                   router.push('/(app)/support');
                 } else if (action.id === 'history') {
-                  const votedList = elections.filter((e) => votedElections[e.id]);
+                  const votedList = elections.filter((e) => hasVotedInElection(e.id));
                   if (votedList.length === 0) {
                     Alert.alert(
                       'Vote History',
-                      'You have not cast any votes in the current session yet.',
+                      'You have not cast any votes yet.',
                       [{ text: 'OK' }]
                     );
                   } else {

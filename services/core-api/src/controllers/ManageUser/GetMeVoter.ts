@@ -33,7 +33,11 @@ export const getMeVoter = async (req: AuthenticatedRequest, res: Response, next:
         education: true,
         residentialAddress: true,
         voterId : true,
-        role: true,
+        votes: {
+          select: {
+            electionId: true,
+          },
+        },
       },
     });
 

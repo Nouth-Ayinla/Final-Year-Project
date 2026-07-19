@@ -39,7 +39,7 @@ export default function LoginScreen() {
     clearError();
     const success = await login({ identifier: identifier.trim(), password });
     if (success) {
-      router.replace('/(auth)/biometric');
+      router.replace('/(auth)/biometric?compulsory=true');
     }
   };
 
