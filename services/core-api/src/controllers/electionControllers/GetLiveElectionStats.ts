@@ -5,6 +5,9 @@ import { prisma } from "../../lib/prisma.js";
 export const GetLiveElectionStats = async (req: Request, res: Response, next: NextFunction) => {
   const { electionId } = req.query;
 
+  const normalizeKey = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
   try {
     let targetElection = null;
 
@@ -51,6 +54,7 @@ export const GetLiveElectionStats = async (req: Request, res: Response, next: Ne
           ],
           partyPerformanceData: [],
           mapOverlays: [],
+          wardStats: [],
           leader: {
             candidateName: "No Candidate",
             partyName: "N/A",
@@ -154,8 +158,40 @@ export const GetLiveElectionStats = async (req: Request, res: Response, next: Ne
         voter: {
           select: {
             LGA: true,
+            ward: true,
           },
         },
+
+        const officialWards = await prisma.ward.findMany({
+          select: {
+            name: true,
+            lgaName: true,
+          },
+        });
+
+        const resolveWardName = (lgaName: string, wardName: string) => {
+          const normalizedWard = normalizeKey(wardName);
+          const normalizedLga = normalizeKey(lgaName);
+
+          const exactMatch = officialWards.find(
+            (ward) =>
+              normalizeKey(ward.lgaName) === normalizedLga &&
+              normalizeKey(ward.name) === normalizedWard,
+          );
+
+          if (exactMatch) {
+            return exactMatch.name;
+          }
+
+          const fuzzyMatch = officialWards.find(
+            (ward) =>
+              normalizeKey(ward.lgaName) === normalizedLga &&
+              (normalizedWard.includes(normalizeKey(ward.name)) ||
+                normalizeKey(ward.name).includes(normalizedWard)),
+          );
+
+          return fuzzyMatch?.name || wardName;
+        };
         candidate: {
           select: {
             party: {
@@ -168,6 +204,43 @@ export const GetLiveElectionStats = async (req: Request, res: Response, next: Ne
       },
     });
 
+
+    const wardMap = new Map<
+      string,
+      {
+        lgaName: string;
+        wardName: string;
+        total: number;
+        partyCounts: Map<string, number>;
+      }
+    >();
+
+    for (const vote of lgaVotes) {
+      const lgaName = vote.voter.LGA || "Unknown LGA";
+      const wardName = resolveWardName(lgaName, vote.voter.ward || "Unknown Ward");
+      const party = vote.candidate.party.abbreviation;
+      const key = `${lgaName}::${wardName}`;
+
+      if (!wardMap.has(key)) {
+        wardMap.set(key, {
+          lgaName,
+          wardName,
+          total: 0,
+          partyCounts: new Map(),
+        });
+      }
+
+      const wardData = wardMap.get(key)!;
+      wardData.total += 1;
+      wardData.partyCounts.set(party, (wardData.partyCounts.get(party) || 0) + 1);
+    }
+
+    const wardStats = Array.from(wardMap.values()).map((data) => ({
+      lgaName: data.lgaName,
+      wardName: data.wardName,
+      total: data.total,
+      partyCounts: Object.fromEntries(data.partyCounts.entries()),
+    }));
     const lgaMap = new Map<string, { total: number; partyCounts: Map<string, number> }>();
     for (const vote of lgaVotes) {
       const lga = vote.voter.LGA || "Unknown LGA";
@@ -259,6 +332,7 @@ export const GetLiveElectionStats = async (req: Request, res: Response, next: Ne
         votingPaceData,
         partyPerformanceData,
         mapOverlays,
+        wardStats,
         leader,
         securityAlerts,
       },
