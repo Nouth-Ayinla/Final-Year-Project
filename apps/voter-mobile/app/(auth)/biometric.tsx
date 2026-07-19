@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -21,6 +21,8 @@ import { useBiometric } from '@/hooks/useBiometric';
 
 export default function BiometricScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ compulsory?: string }>();
+  const isCompulsory = params.compulsory === 'true';
   const { setBiometricVerified, setBiometricSkipped, logout, voter } = useAuthStore();
   const {
     isAvailable,
@@ -213,13 +215,15 @@ export default function BiometricScreen() {
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleSkip}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.secondaryButtonText}>I will do it later</Text>
-          </TouchableOpacity>
+          {!isCompulsory && (
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleSkip}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.secondaryButtonText}>I will do it later</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

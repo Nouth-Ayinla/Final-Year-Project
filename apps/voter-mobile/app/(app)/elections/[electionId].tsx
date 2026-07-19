@@ -40,7 +40,7 @@ function CandidateCard({
   onPress: () => void;
 }) {
   const partyAbbr = candidate.party?.abbreviation || '';
-  const partyColor = candidate.party?.primaryColor || (partyAbbr ? PARTY_COLORS[partyAbbr] : null) || Colors.textMuted;
+  const partyColor = candidate.party?.primaryColor || (partyAbbr ? PARTY_COLORS[partyAbbr] : Colors.textMuted) || Colors.textMuted;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -81,7 +81,7 @@ export default function ElectionDetailScreen() {
     isLoadingCandidates,
     fetchCandidates,
     clearCandidates,
-    votedElections,
+    hasVotedInElection,
   } = useElectionStore();
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function ElectionDetailScreen() {
     if (electionId) fetchCandidates(electionId);
   }, [electionId]);
 
-  const hasVoted = votedElections[electionId];
+  const hasVoted = hasVotedInElection(electionId);
 
   return (
     <SafeAreaView style={styles.container}>

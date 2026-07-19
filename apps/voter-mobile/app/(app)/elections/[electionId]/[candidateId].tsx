@@ -64,11 +64,11 @@ export default function CandidateDetailScreen() {
     fetchCandidateDetail,
     clearCandidateDetail,
     castVote,
-    votedElections,
+    hasVotedInElection,
   } = useElectionStore();
 
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const hasVoted = votedElections[electionId] || voteSuccess;
+  const hasVoted = hasVotedInElection(electionId) || voteSuccess;
 
   useEffect(() => {
     if (electionId && candidateId) fetchCandidateDetail(electionId, candidateId);
@@ -79,6 +79,7 @@ export default function CandidateDetailScreen() {
 
   const handleVote = () => {
     if (hasVoted) return;
+    console.log("green wood");
     Alert.alert(
       'Confirm Your Vote',
       `Are you sure you want to vote for ${candidateDetail?.firstName} ${candidateDetail?.surname} (${partyAbbr})?`,

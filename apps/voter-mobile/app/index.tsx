@@ -22,15 +22,13 @@ export default function Index() {
     const timeout = setTimeout(() => {
       if (!isAuthenticated) {
         router.replace('/(auth)/login');
-      } else if (!isBiometricVerified && !biometricSkipped) {
-        router.replace('/(auth)/biometric');
       } else {
         router.replace('/(app)/dashboard');
       }
     }, 100);
 
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, isBiometricVerified, biometricSkipped]);
+  }, [isAuthenticated]);
 
   return <View style={styles.container} />;
 }

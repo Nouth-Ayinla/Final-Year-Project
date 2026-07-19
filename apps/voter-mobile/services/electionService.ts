@@ -104,6 +104,23 @@ export interface CastVoteResponse {
   vote?: any;
 }
 
+export interface VoterInfo {
+  firstName: string;
+  surname: string;
+  otherName?: string;
+  email: string;
+  profilePicture: string;
+  DOB: string;
+  sex: string;
+  maritalStatus: string;
+  state: string;
+  LGA: string;
+  education: string;
+  residentialAddress: string;
+  voterId: string;
+  votes: { electionId: string }[];
+}
+
 export const electionService = {
   /**
    * Get all elections visible to the voter (excludes DRAFT).
@@ -149,6 +166,16 @@ export const electionService = {
   castVote: async (candidateId: string): Promise<CastVoteResponse> => {
     const { data } = await apiClient.post(API_ENDPOINTS.VOTER_CAST_VOTE(candidateId));
     return data;
+  },
+
+  /**
+   * Get current voter information including voting history.
+   * GET /api/voter/getMeVoter
+   * Response: VoterInfo with votes array containing electionIds
+   */
+  getVoterInfo: async (): Promise<{ data: VoterInfo }> => {
+    const { data } = await apiClient.get(API_ENDPOINTS.VOTER_ME);
+    return { data };
   },
 
   verifyBiometric: async (
