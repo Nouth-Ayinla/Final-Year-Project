@@ -58,8 +58,8 @@ export const useElectionStore = create<ElectionState>((set, get) => ({
       const res = await electionService.getElections();
       set({ elections: res.data ?? [], isLoadingElections: false });
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to load elections.';
-      set({ isLoadingElections: false, error: message });
+      console.error('Error fetching elections:', err);
+      set({ isLoadingElections: false });
     }
   },
 
@@ -69,8 +69,8 @@ export const useElectionStore = create<ElectionState>((set, get) => ({
       const res = await electionService.getCandidates(electionId);
       set({ candidates: res.data ?? [], isLoadingCandidates: false });
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to load candidates.';
-      set({ isLoadingCandidates: false, error: message });
+      console.error('Error fetching candidates:', err);
+      set({ isLoadingCandidates: false });
     }
   },
 
@@ -80,8 +80,8 @@ export const useElectionStore = create<ElectionState>((set, get) => ({
       const res = await electionService.getCandidateDetail(electionId, candidateId);
       set({ candidateDetail: res.data ?? null, isLoadingDetail: false });
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to load candidate details.';
-      set({ isLoadingDetail: false, error: message });
+      console.error('Error fetching candidate detail:', err);
+      set({ isLoadingDetail: false });
     }
   },
 
@@ -110,8 +110,8 @@ export const useElectionStore = create<ElectionState>((set, get) => ({
       const res = await electionService.getVoterInfo();
       set({ voterInfo: res.data, isLoadingVoterInfo: false });
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to load voter info.';
-      set({ isLoadingVoterInfo: false, error: message });
+      console.error('Error fetching voter info:', err);
+      set({ isLoadingVoterInfo: false });
     }
   },
 

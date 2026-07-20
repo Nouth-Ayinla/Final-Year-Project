@@ -114,7 +114,7 @@ export const useElectionStore = create<ElectionStore>((set) => ({
       set({ elections });
       return elections;
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to get elections");
+      console.error("Error fetching elections:", error);
       return [];
     } finally {
       set({ isGettingElections: false });
@@ -214,8 +214,7 @@ export const useElectionStore = create<ElectionStore>((set) => ({
 
       return candidates;
     } catch (error: any) {
-      console.log("Error getting candidates", error);
-      toast.error(error.response?.data?.message || "Failed to get candidates");
+      console.error("Error getting candidates:", error);
       return [];
     } finally {
       set({ isGettingCandidatesInElection: false });
@@ -261,8 +260,7 @@ export const useElectionStore = create<ElectionStore>((set) => ({
 
       return res.data.data;
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to fetch candidate");
-
+      console.error("Error fetching candidate details:", error);
       return null;
     } finally {
       set({
@@ -316,7 +314,7 @@ export const useElectionStore = create<ElectionStore>((set) => ({
       set({ parties });
       return parties;
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to load political parties");
+      console.error("Error loading political parties:", error);
       return [];
     } finally {
       set({ isGettingParties: false });

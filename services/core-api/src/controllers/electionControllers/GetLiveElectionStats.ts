@@ -161,37 +161,6 @@ export const GetLiveElectionStats = async (req: Request, res: Response, next: Ne
             ward: true,
           },
         },
-
-        const officialWards = await prisma.ward.findMany({
-          select: {
-            name: true,
-            lgaName: true,
-          },
-        });
-
-        const resolveWardName = (lgaName: string, wardName: string) => {
-          const normalizedWard = normalizeKey(wardName);
-          const normalizedLga = normalizeKey(lgaName);
-
-          const exactMatch = officialWards.find(
-            (ward) =>
-              normalizeKey(ward.lgaName) === normalizedLga &&
-              normalizeKey(ward.name) === normalizedWard,
-          );
-
-          if (exactMatch) {
-            return exactMatch.name;
-          }
-
-          const fuzzyMatch = officialWards.find(
-            (ward) =>
-              normalizeKey(ward.lgaName) === normalizedLga &&
-              (normalizedWard.includes(normalizeKey(ward.name)) ||
-                normalizeKey(ward.name).includes(normalizedWard)),
-          );
-
-          return fuzzyMatch?.name || wardName;
-        };
         candidate: {
           select: {
             party: {
@@ -203,6 +172,37 @@ export const GetLiveElectionStats = async (req: Request, res: Response, next: Ne
         },
       },
     });
+
+    const officialWards = await prisma.ward.findMany({
+      select: {
+        name: true,
+        lgaName: true,
+      },
+    });
+
+    const resolveWardName = (lgaName: string, wardName: string) => {
+      const normalizedWard = normalizeKey(wardName);
+      const normalizedLga = normalizeKey(lgaName);
+
+      const exactMatch = officialWards.find(
+        (ward) =>
+          normalizeKey(ward.lgaName) === normalizedLga &&
+          normalizeKey(ward.name) === normalizedWard,
+      );
+
+      if (exactMatch) {
+        return exactMatch.name;
+      }
+
+      const fuzzyMatch = officialWards.find(
+        (ward) =>
+          normalizeKey(ward.lgaName) === normalizedLga &&
+          (normalizedWard.includes(normalizeKey(ward.name)) ||
+            normalizeKey(ward.name).includes(normalizedWard)),
+      );
+
+      return fuzzyMatch?.name || wardName;
+    };
 
 
     const wardMap = new Map<

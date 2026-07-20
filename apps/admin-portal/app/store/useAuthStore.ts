@@ -184,14 +184,14 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
       const res = await axiosInstance.post("/admin/registerVoter", formData);
 
-      toast.success(res.data?.message || "Officer registered successfully");
+      toast.success(res.data?.message || "Voter registered successfully");
 
       return true;
     } catch (error: any) {
-      console.log("Error registering officer", error);
+      console.log("Error registering voter", error);
 
       toast.error(
-        error.response?.data?.message || "Failed to register officer",
+        error.response?.data?.error?.message || error.response?.data?.message || "Failed to register voter",
       );
 
       return false;
@@ -208,12 +208,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ officers });
       return officers;
     } catch (error: any) {
-      console.log("Error getting officer", error);
-
-      toast.error(
-        error.response?.data?.message || "Failed to Get registered officer",
-      );
-
+      console.error("Error getting registered officers:", error);
       return [];
     } finally {
       set({ isGettingOfficers: false });
@@ -228,12 +223,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ voters });
       return voters;
     } catch (error: any) {
-      console.log("Error getting officer", error);
-
-      toast.error(
-        error.response?.data?.message || "Failed to Get registered officer",
-      );
-
+      console.error("Error getting registered voters:", error);
       return [];
     } finally {
       set({ isGettingVoters: false });
